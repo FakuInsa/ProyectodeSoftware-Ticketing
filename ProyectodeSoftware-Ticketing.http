@@ -1,0 +1,6 @@
+@ProyectodeSoftware_Ticketing_HostAddress = http://localhost:5171
+
+GET {{ProyectodeSoftware_Ticketing_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
