@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Data;
+using Ticketing.Services;
+using Ticketing.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,10 @@ builder.Services.AddControllers();
 // Configure Entity Framework Core with PostgreSQL
 builder.Services.AddDbContext<SistemaTicketingContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+// Inyección de Dependencias
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 //para poner swagger porque instalamos .net9 y no viene mas con sawgger
 builder.Services.AddEndpointsApiExplorer();
