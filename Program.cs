@@ -3,7 +3,11 @@ using Ticketing.Data;
 using Ticketing.Services;
 using Ticketing.DTOs;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    WebRootPath = "Frontend"
+});
 
 
 

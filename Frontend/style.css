@@ -1,0 +1,40 @@
+:root {
+    --bg-color: #0d0f12;
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --accent-color: #6366f1;
+
+    --seat-available: #22c55e;
+    --seat-reserved: #eab308;
+    --seat-sold: #ef4444;
+
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Clases utilitarias y layout base */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    flex: 1;
+}
+
+.hidden {
+    display: none !important;
+}
