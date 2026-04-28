@@ -30,7 +30,8 @@ namespace Ticketing.Data
             {
                 Nombre = "Concierto Clasico",
                 Fecha = DateTime.UtcNow.AddMonths(2),
-                Lugar = "Teatro FM"
+                Lugar = "Teatro FM",
+                Estado = "activo"
             };
 
             context.Eventos.Add(evento);

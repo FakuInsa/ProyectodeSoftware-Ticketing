@@ -367,3 +367,26 @@ header {
         transform: scale(0.9);
     }
 }
+
+/* Event Status */
+.event-status {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-activo {
+    background-color: rgba(34, 197, 94, 0.2);
+    color: var(--seat-available);
+    border: 1px solid var(--seat-available);
+}
+
+.status-inactivo {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--seat-sold);
+    border: 1px solid var(--seat-sold);
+}
