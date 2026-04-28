@@ -35,6 +35,14 @@ body {
     flex: 1;
 }
 
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+
 .hidden {
     display: none !important;
 }
@@ -51,12 +59,35 @@ body {
     border-radius: 16px;
     padding: 2rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
 }
+
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-color), #a855f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
 
 .event-card:hover {
     transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
+
+.event-card:hover::before {
+    opacity: 1;
+}
+
 
 .toast {
     position: fixed;
