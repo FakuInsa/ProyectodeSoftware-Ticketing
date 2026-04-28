@@ -1,0 +1,369 @@
+:root {
+    --bg-color: #0d0f12;
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --accent-color: #6366f1;
+
+    --seat-available: #22c55e;
+    --seat-reserved: #eab308;
+    --seat-sold: #ef4444;
+
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    padding: 1.5rem 2rem;
+    background: rgba(13, 15, 18, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--card-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Clases utilitarias y layout base */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    flex: 1;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+
+.hidden {
+    display: none !important;
+}
+
+/* grilla de eventos */
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.event-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-color), #a855f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.event-card:hover::before {
+    opacity: 1;
+}
+
+.event-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.event-detail {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    color: white;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+/* Seat Map */
+.seat-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.seat-preview {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.seat-available {
+    background-color: var(--seat-available);
+}
+
+.seat-reserved {
+    background-color: var(--seat-reserved);
+}
+
+.seat-sold {
+    background-color: var(--seat-sold);
+}
+
+.seat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+}
+
+.seat {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+    color: white;
+}
+
+.seat.disponible {
+    background-color: rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--seat-available);
+    color: var(--seat-available);
+}
+
+.seat.disponible:hover {
+    background-color: var(--seat-available);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+}
+
+.seat.reservada {
+    background-color: rgba(234, 179, 8, 0.2);
+    border: 1px solid var(--seat-reserved);
+    color: var(--seat-reserved);
+    cursor: not-allowed;
+}
+
+.seat.vendida {
+    background-color: rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--seat-sold);
+    color: var(--seat-sold);
+    cursor: not-allowed;
+}
+
+/* Tooltip for seat */
+.seat::after {
+    content: attr(data-info);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.seat:hover::after {
+    opacity: 1;
+}
+
+/* botones */
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-bottom: 2rem;
+}
+
+.btn-secondary:hover {
+    background: var(--card-bg);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.main-header {
+    padding: 1.5rem 2rem;
+    background: rgba(13, 15, 18, 0.8);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+}
+
+/* Colores de la leyenda */
+.legend-dot.available {
+    color: var(--seat-available);
+}
+
+.legend-dot.reserved {
+    color: var(--seat-reserved);
+}
+
+.legend-dot.sold {
+    color: var(--seat-sold);
+}
+
+/* Layout de los Sectores y Filas */
+.sector-container {
+    margin-bottom: 2.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.sector-title {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.seat-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* La letra identificadora de la fila (A, B, C...) */
+.row-label {
+    width: 25px;
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-right: 10px;
+}
+
+/* Mensajes genéricos */
+.loading-msg {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Toast Notification Tipos */
+.toast.success {
+    border-left: 5px solid var(--seat-available);
+}
+
+.toast.error {
+    border-left: 5px solid var(--seat-sold);
+}
+
+/* Estado procesando del asiento */
+.seat.processing {
+    pointer-events: none;
+    opacity: 0.5;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(0.9);
+    }
+}
