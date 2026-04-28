@@ -107,3 +107,37 @@ function renderSeatMap(seats) {
         container.appendChild(sectorDiv);
     });
 }
+async function reserveSeat(butacaId, seatElement) {
+    // 1. Deshabilitar botón temporalmente
+    seatElement.style.pointerEvents = 'none';
+    seatElement.style.opacity = '0.5';
+    try {
+        // 2. Enviar petición POST
+        const response = await fetch(`${API_BASE}/reservations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                butacaId: butacaId,
+                usuarioId: 1 // Hardcodeado temporalmente
+            })
+        });
+        if (response.ok) {
+            // 3. Actualización Optimista: Éxito
+            seatElement.className = 'seat reservada';
+            seatElement.style.opacity = '1';
+
+            // Remover event listener clonando el elemento
+            const newSeat = seatElement.cloneNode(true);
+            seatElement.parentNode.replaceChild(newSeat, seatElement);
+
+            showToast('¡Reserva exitosa!');
+        } else {
+            throw new Error('Error en el servidor');
+        }
+    } catch (error) {
+        // 4. Fallo: Restaurar UI original
+        seatElement.style.pointerEvents = 'auto';
+        seatElement.style.opacity = '1';
+        showToast('No se pudo reservar', 'error');
+    }
+}
