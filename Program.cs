@@ -36,7 +36,12 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<SistemaTicketingContext>();//inicializa la base de datos con datos de prueba
+        var context = services.GetRequiredService<SistemaTicketingContext>();
+        
+        // Ejecutar las migraciones automáticamente (Crea la base de datos y tablas si no existen)
+        context.Database.Migrate();
+        
+        // inicializa la base de datos con datos de prueba
         DbInitializer.Initialize(context);
     }
     catch (Exception ex)
