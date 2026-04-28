@@ -276,3 +276,94 @@ header {
 .animate-fade-in {
     animation: fadeIn 0.4s ease forwards;
 }
+
+.main-header {
+    padding: 1.5rem 2rem;
+    background: rgba(13, 15, 18, 0.8);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+}
+
+/* Colores de la leyenda */
+.legend-dot.available {
+    color: var(--seat-available);
+}
+
+.legend-dot.reserved {
+    color: var(--seat-reserved);
+}
+
+.legend-dot.sold {
+    color: var(--seat-sold);
+}
+
+/* Layout de los Sectores y Filas */
+.sector-container {
+    margin-bottom: 2.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.sector-title {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.seat-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* La letra identificadora de la fila (A, B, C...) */
+.row-label {
+    width: 25px;
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-right: 10px;
+}
+
+/* Mensajes genéricos */
+.loading-msg {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Toast Notification Tipos */
+.toast.success {
+    border-left: 5px solid var(--seat-available);
+}
+
+.toast.error {
+    border-left: 5px solid var(--seat-sold);
+}
+
+/* Estado procesando del asiento */
+.seat.processing {
+    pointer-events: none;
+    opacity: 0.5;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(0.9);
+    }
+}
