@@ -104,3 +104,114 @@ body {
 .toast.show {
     transform: translateX(0);
 }
+
+/* Seat Map */
+.seat-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.seat-preview {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.seat-available {
+    background-color: var(--seat-available);
+}
+
+.seat-reserved {
+    background-color: var(--seat-reserved);
+}
+
+.seat-sold {
+    background-color: var(--seat-sold);
+}
+
+.seat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+}
+
+.seat {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+    color: white;
+}
+
+.seat.disponible {
+    background-color: rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--seat-available);
+    color: var(--seat-available);
+}
+
+.seat.disponible:hover {
+    background-color: var(--seat-available);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+}
+
+.seat.reservada {
+    background-color: rgba(234, 179, 8, 0.2);
+    border: 1px solid var(--seat-reserved);
+    color: var(--seat-reserved);
+    cursor: not-allowed;
+}
+
+.seat.vendida {
+    background-color: rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--seat-sold);
+    color: var(--seat-sold);
+    cursor: not-allowed;
+}
+
+/* Tooltip for seat */
+.seat::after {
+    content: attr(data-info);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.seat:hover::after {
+    opacity: 1;
+}
