@@ -21,6 +21,20 @@
                 <!-- Las tarjetas se inyectarán aquí vía JS -->
             </div>
         </section>
+
+        <section id="seat-map-section" class="hidden">
+            <button id="back-btn" class="btn-secondary">← Volver</button>
+            <h2 id="event-title">Cargando...</h2>
+
+            <!-- Leyenda de colores -->
+            <div class="seat-legend" style="display:flex; gap:1rem; margin:1rem 0;">
+                <div><span style="color:var(--seat-available)">■</span> Disponible</div>
+                <div><span style="color:var(--seat-reserved)">■</span> Reservada</div>
+                <div><span style="color:var(--seat-sold)">■</span> Vendida</div>
+            </div>
+
+            <div id="seat-grid-container"></div>
+        </section>
     </main>
 
     <script src="app.js"></script>
