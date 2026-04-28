@@ -1,4 +1,5 @@
 const API_BASE = '/api/v1';
+
 document.addEventListener('DOMContentLoaded', () => {
     loadEvents();
     document.getElementById('back-btn').addEventListener('click', showEventsSection);
@@ -22,9 +23,9 @@ function renderEvents(events) {
         card.className = 'event-card';
         card.innerHTML = `
             <h3>${event.nombre}</h3>
-            <div>📍 ${event.lugar}</div>
+            <div>${event.lugar}</div>
         `;
-        card.addEventListener('click', () => loadSeatMap(event)); // Preparando la navegación
+        card.addEventListener('click', () => loadSeatMap(event));
         container.appendChild(card);
     });
 }
@@ -34,12 +35,12 @@ function showToast(message, type = 'success') {
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'toast';
-        toast.className = 'toast';
         document.body.appendChild(toast);
     }
+
+    // Asignamos las clases limpias (sin inyectar borderLeft por JS)
+    toast.className = `toast show ${type}`;
     toast.textContent = message;
-    toast.style.borderLeft = `4px solid ${type === 'error' ? 'red' : 'green'}`;
-    toast.classList.add('show');
 
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
@@ -53,14 +54,20 @@ function showSeatMapSection(eventTitle) {
     document.getElementById('events-section').classList.add('hidden');
     document.getElementById('seat-map-section').classList.remove('hidden');
     document.getElementById('event-title').textContent = eventTitle;
-    document.getElementById('seat-grid-container').innerHTML = '<div style="text-align:center; padding: 2rem;">Cargando butacas...</div>';
+
+    // Reemplazamos el style inline por una clase de CSS
+    document.getElementById('seat-grid-container').innerHTML = '<div class="loading-msg">Cargando butacas...</div>';
 }
 
 async function loadSeatMap(event) {
     showSeatMapSection(event.nombre);
-    const response = await fetch(`${API_BASE}/events/${event.id}/seats`);
-    const seats = await response.json();
-    renderSeatMap(seats);
+    try {
+        const response = await fetch(`${API_BASE}/events/${event.id}/seats`);
+        const seats = await response.json();
+        renderSeatMap(seats);
+    } catch (error) {
+        showToast('Error al cargar butacas', 'error');
+    }
 }
 
 function renderSeatMap(seats) {
@@ -74,10 +81,20 @@ function renderSeatMap(seats) {
         sectors[seat.sectorNombre].push(seat);
     });
 
-    // 2. Iterar sobre Sectores y agrupar por Fila
-    Object.keys(sectors).forEach(sectorName => {
+    // REQUISITO CUMPLIDO: Forzar el orden para que "Campo" esté arriba
+    const orderedSectorNames = Object.keys(sectors).sort((a, b) => {
+        const nameA = a.toLowerCase();
+        const nameB = b.toLowerCase();
+        if (nameA.includes('campo')) return -1; // Tira "Campo" para arriba
+        if (nameB.includes('campo')) return 1;  // Tira "Campo" para arriba
+        return 0; // El resto los deja como están (ej: VIP)
+    });
+
+    // 2. Iterar sobre Sectores ordenados
+    orderedSectorNames.forEach(sectorName => {
         const sectorDiv = document.createElement('div');
-        sectorDiv.innerHTML = `<h3>Sector: ${sectorName}</h3>`;
+        sectorDiv.className = 'sector-container';
+        sectorDiv.innerHTML = `<h3 class="sector-title">Sector: ${sectorName}</h3>`;
 
         const filas = {};
         sectors[sectorName].forEach(seat => {
@@ -85,18 +102,23 @@ function renderSeatMap(seats) {
             filas[seat.fila].push(seat);
         });
 
-        // 3. Pintar Butacas por Fila
-        Object.keys(filas).forEach(filaName => {
+        // Ordenamos las filas alfabéticamente (A, B, C...)
+        Object.keys(filas).sort().forEach(filaName => {
             const rowDiv = document.createElement('div');
-            rowDiv.style.display = 'flex';
-            rowDiv.style.gap = '5px';
+            rowDiv.className = 'seat-row'; // Clase en vez de style.display='flex'
 
+            // REQUISITO CUMPLIDO: Dibujar la letra de la fila al principio
+            const rowLabel = document.createElement('div');
+            rowLabel.className = 'row-label';
+            rowLabel.textContent = filaName;
+            rowDiv.appendChild(rowLabel);
+
+            // Dibujar los asientos de esa fila
             filas[filaName].forEach(seat => {
                 const seatEl = document.createElement('div');
                 seatEl.className = `seat ${seat.estado.toLowerCase()}`;
                 seatEl.textContent = seat.numeroAsiento;
 
-                // Solo si está disponible se le agrega evento click
                 if (seat.estado === 'Disponible') {
                     seatEl.addEventListener('click', () => reserveSeat(seat.butacaId, seatEl));
                 }
@@ -107,37 +129,29 @@ function renderSeatMap(seats) {
         container.appendChild(sectorDiv);
     });
 }
+
 async function reserveSeat(butacaId, seatElement) {
-    // 1. Deshabilitar botón temporalmente
-    seatElement.style.pointerEvents = 'none';
-    seatElement.style.opacity = '0.5';
+    // Usamos una clase en lugar de .style.opacity
+    seatElement.classList.add('processing');
+
     try {
-        // 2. Enviar petición POST
         const response = await fetch(`${API_BASE}/reservations`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                butacaId: butacaId,
-                usuarioId: 1 // Hardcodeado temporalmente
-            })
+            body: JSON.stringify({ butacaId: butacaId, usuarioId: 1 })
         });
-        if (response.ok) {
-            // 3. Actualización Optimista: Éxito
-            seatElement.className = 'seat reservada';
-            seatElement.style.opacity = '1';
 
+        if (response.ok) {
+            seatElement.className = 'seat reservada';
             // Remover event listener clonando el elemento
             const newSeat = seatElement.cloneNode(true);
             seatElement.parentNode.replaceChild(newSeat, seatElement);
-
-            showToast('¡Reserva exitosa!');
+            showToast('¡Reserva exitosa!', 'success');
         } else {
             throw new Error('Error en el servidor');
         }
     } catch (error) {
-        // 4. Fallo: Restaurar UI original
-        seatElement.style.pointerEvents = 'auto';
-        seatElement.style.opacity = '1';
+        seatElement.classList.remove('processing');
         showToast('No se pudo reservar', 'error');
     }
 }

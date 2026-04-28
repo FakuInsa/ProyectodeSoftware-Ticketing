@@ -9,16 +9,14 @@
 </head>
 
 <body>
-    <header
-        style="padding: 1.5rem 2rem; background: rgba(13, 15, 18, 0.8); border-bottom: 1px solid var(--card-border);">
-        <div class="logo" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-color);">TicketPro</div>
+    <header class="main-header">
+        <div class="logo">TicketPro</div>
     </header>
 
     <main class="container">
         <section id="events-section">
             <h1 class="section-title">Próximos Eventos</h1>
             <div id="events-container" class="events-grid">
-                <!-- Las tarjetas se inyectarán aquí vía JS -->
             </div>
         </section>
 
@@ -26,11 +24,10 @@
             <button id="back-btn" class="btn-secondary">← Volver</button>
             <h2 id="event-title">Cargando...</h2>
 
-            <!-- Leyenda de colores -->
-            <div class="seat-legend" style="display:flex; gap:1rem; margin:1rem 0;">
-                <div><span style="color:var(--seat-available)">■</span> Disponible</div>
-                <div><span style="color:var(--seat-reserved)">■</span> Reservada</div>
-                <div><span style="color:var(--seat-sold)">■</span> Vendida</div>
+            <div class="seat-legend">
+                <div class="legend-item"><span class="legend-dot available">■</span> Disponible</div>
+                <div class="legend-item"><span class="legend-dot reserved">■</span> Reservada</div>
+                <div class="legend-item"><span class="legend-dot sold">■</span> Vendida</div>
             </div>
 
             <div id="seat-grid-container"></div>
