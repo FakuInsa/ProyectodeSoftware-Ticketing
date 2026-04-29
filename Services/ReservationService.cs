@@ -25,6 +25,7 @@ namespace Ticketing.Services
 
             butaca.Estado = EstadoButaca.Reservada;
             butaca.FechaBloqueo = DateTime.UtcNow;
+            butaca.Version++;
 
             var reserva = new Reserva
             {
@@ -56,7 +57,11 @@ namespace Ticketing.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                return (false, "La butaca no se encuentra disponible actualmente.", null);
+                return (false, "CONCURRENCY_ERROR", null);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error inesperado: {ex.Message}", null);
             }
         }
     }

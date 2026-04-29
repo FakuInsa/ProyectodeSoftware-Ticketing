@@ -22,8 +22,22 @@ namespace Ticketing.Controllers
             var result = await _reservationService.CreateReservationAsync(request);
 
             if (!result.Success)
-                return BadRequest(result.Message);
+            {
+                // Si el mensaje es el que definimos en el catch del servicio...
+                if (result.Message == "CONCURRENCY_ERROR")
+                {
+                    // Devolvemos el código 409 Conflict
+                    return Conflict(new
+                    {
+                        error = "La butaca ya no está disponible. Fue seleccionada por otro usuario en este instante."
+                    });
+                }
 
+                // Para cualquier otro error (datos inválidos, etc.), devolvemos 400
+                return BadRequest(new { error = result.Message });
+            }
+
+            // Si todo salió bien, devolvemos 200 OK
             return Ok(new { Mensaje = result.Message, ReservaId = result.Reserva?.Id });
         }
     }
