@@ -12,6 +12,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
+    # Le decimos a Docker que verifique cada 5 segundos si PostgreSQL ya está listo
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -23,8 +29,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       # Sobreescribimos la conexión para que apunte al servicio 'db' en la red de docker
       - ConnectionStrings__DefaultConnection=Host=db;Database=TicketingDB;Username=postgres;Password=admin
+    # Cambiamos el depends_on para que no arranque hasta que la BD pase el chequeo de salud
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
 
   pgadmin:
