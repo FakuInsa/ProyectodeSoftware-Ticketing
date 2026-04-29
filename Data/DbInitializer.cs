@@ -30,7 +30,8 @@ namespace Ticketing.Data
             {
                 Nombre = "Concierto Clasico",
                 Fecha = DateTime.UtcNow.AddMonths(2),
-                Lugar = "Teatro FM"
+                Lugar = "Teatro FM",
+                Estado = "Activo"
             };
 
             context.Eventos.Add(evento);
@@ -56,6 +57,43 @@ namespace Ticketing.Data
                         NumeroAsiento = ((i - 1) % 10) + 1, // 1 al 10
                         Estado = EstadoButaca.Disponible,
                         Version = 1
+                    });
+                }
+            }
+
+            context.SaveChanges();
+
+            var evento2 = new Evento
+            {
+                Nombre = "Festival de Rock",
+                Fecha = DateTime.UtcNow.AddMonths(3),
+                Lugar = "Estadio Central",
+                Estado = "Inactivo"
+            };
+
+            context.Eventos.Add(evento2);
+            context.SaveChanges();
+
+            var sectoresEvento2 = new Sector[]
+            {
+                new Sector { EventoId = evento2.Id, Nombre = "Platea", Precio = 15000.00m, Capacidad = 20 },
+                new Sector { EventoId = evento2.Id, Nombre = "General", Precio = 8000.00m, Capacidad = 20 }
+            };
+
+            context.Sectores.AddRange(sectoresEvento2);
+            context.SaveChanges();
+
+            foreach (var sector in sectoresEvento2)
+            {
+                for (int i = 1; i <= 20; i++)
+                {
+                    context.Butacas.Add(new Butaca
+                    {
+                        SectorId = sector.Id,
+                        Fila = ((char)('A' + ((i - 1) / 10))).ToString(),
+                        NumeroAsiento = ((i - 1) % 10) + 1,
+                        Estado = EstadoButaca.Vendida,
+                        Version = 3
                     });
                 }
             }

@@ -76,6 +76,13 @@ namespace Ticketing.Data
                 .Property(a => a.Detalle)
                 .HasColumnType("jsonb");
 
+            // Relación Auditoria -> Usuario
+            modelBuilder.Entity<Auditoria>()
+                .HasOne(a => a.Usuario)
+                .WithMany()
+                .HasForeignKey(a => a.UsuarioId)
+                .IsRequired(false); // Porque UsuarioId es nullable (int?)
+
             // Usuario
             modelBuilder.Entity<Usuario>()
                 .HasKey(u => u.Id);

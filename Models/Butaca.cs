@@ -19,7 +19,6 @@ namespace Ticketing.Models
     public enum EstadoButaca
     {
         Disponible,
-        Bloqueada,
         Reservada,
         Vendida
     }

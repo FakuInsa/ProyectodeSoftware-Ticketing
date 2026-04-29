@@ -41,7 +41,8 @@ namespace Ticketing.Controllers
                     Id = e.Id,
                     Nombre = e.Nombre,
                     Fecha = e.Fecha,
-                    Lugar = e.Lugar
+                    Lugar = e.Lugar,
+                    Estado =e.Estado
                 })
                 .ToListAsync();
 

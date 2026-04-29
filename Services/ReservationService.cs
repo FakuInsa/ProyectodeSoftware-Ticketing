@@ -10,10 +10,12 @@ namespace Ticketing.Services
     public class ReservationService : IReservationService
     {
         private readonly SistemaTicketingContext _context;
+        private readonly IAuditService _auditService;
 
-        public ReservationService(SistemaTicketingContext context)
+        public ReservationService(SistemaTicketingContext context, IAuditService auditService)
         {
             _context = context;
+            _auditService = auditService;
         }
 
         public async Task<(bool Success, string Message, Reserva? Reserva)> CreateReservationAsync(CreateReservationRequest request)
@@ -38,25 +40,32 @@ namespace Ticketing.Services
 
             _context.Reservas.Add(reserva);
 
-            var auditoria = new Auditoria
-            {
-                UsuarioId = request.UsuarioId,
-                Accion = "CREATE_RESERVATION",
-                RecursoAfectado = "Butaca",
-                RecursoId = butaca.Id,
-                FechaHora = DateTime.UtcNow,
-                Detalle = $"{{\"mensaje\": \"Reserva creada para butaca {butaca.Id}\"}}"
-            };
-
-            _context.Auditorias.Add(auditoria);
-
             try
             {
                 await _context.SaveChangesAsync();
+
+                // Registrar auditoría exitosa (fuera de la transacción principal para garantizar inmutabilidad)
+                await _auditService.LogAsync(
+                    request.UsuarioId,
+                    "CREATE_RESERVATION",
+                    "Butaca",
+                    butaca.Id,
+                    $"{{\"mensaje\": \"Reserva creada para butaca {butaca.Id}\"}}"
+                );
+
                 return (true, "Reserva exitosa.", reserva);
             }
             catch (DbUpdateConcurrencyException)
             {
+                // Registrar auditoría fallida por concurrencia
+                await _auditService.LogAsync(
+                    request.UsuarioId,
+                    "RESERVATION_FAILED_CONCURRENCY",
+                    "Butaca",
+                    butaca.Id,
+                    $"{{\"mensaje\": \"Fallo al intentar reservar butaca {butaca.Id} por concurrencia\"}}"
+                );
+
                 return (false, "CONCURRENCY_ERROR", null);
             }
             catch (Exception ex)
