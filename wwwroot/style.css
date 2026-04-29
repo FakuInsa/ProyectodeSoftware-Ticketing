@@ -431,3 +431,46 @@ header {
         text-align: center;
     }
 }
+
+/* =========================================
+   ESTILOS PARA EVENTOS INACTIVOS (MODIFICADO)
+   ========================================= */
+
+.event-card.inactivo {
+    opacity: 0.6;
+    /* Un poco menos transparente para que se lea mejor si vas a entrar */
+    filter: grayscale(100%);
+    cursor: pointer;
+    /* AHORA TE DEJA HACER CLIC */
+    position: relative;
+}
+
+/* Efecto Hover para tarjetas inactivas */
+.event-card.inactivo:hover {
+    transform: translateY(-5px);
+    /* Recupera el movimiento */
+    opacity: 0.9;
+    filter: grayscale(80%);
+    /* Recupera un pelín de color al pasar el mouse */
+    border-color: rgba(239, 68, 68, 0.3);
+    /* Borde con un toque rojo suave */
+}
+
+/* LA LÍNEA ROJA: Reemplaza el violeta por rojo solo para inactivos */
+.event-card.inactivo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
+    /* DEGRADADO ROJO */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.event-card.inactivo:hover::before {
+    opacity: 1;
+    /* Se muestra al pasar el mouse */
+}

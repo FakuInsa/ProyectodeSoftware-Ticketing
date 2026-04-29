@@ -18,14 +18,26 @@ async function loadEvents() {
 function renderEvents(events) {
     const container = document.getElementById('events-container');
     container.innerHTML = '';
+
     events.forEach(event => {
         const card = document.createElement('div');
-        card.className = 'event-card';
+
+        // Determinamos si es activo solo para la estética de la tarjeta
+        const esActivo = event.estado === 'Activo';
+        card.className = esActivo ? 'event-card' : 'event-card inactivo';
+
+        const badgeClass = esActivo ? 'activo' : 'inactivo';
+        const textoEstado = esActivo ? 'Disponible' : (event.estado || 'Finalizado');
+
         card.innerHTML = `
-            <h3>${event.nombre}</h3>
-            <div>${event.lugar}</div>
+            <span class="status-badge ${badgeClass}">${textoEstado}</span>
+            <h3 class="event-title">${event.nombre}</h3>
+            <div class="event-detail">${event.lugar}</div>
         `;
+
+        // AHORA SIEMPRE AGREGA EL CLIC, sin importar el estado
         card.addEventListener('click', () => loadSeatMap(event));
+
         container.appendChild(card);
     });
 }
