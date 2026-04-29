@@ -11,5 +11,7 @@ namespace Ticketing.Models
         public int RecursoId { get; set; }
         public DateTime FechaHora { get; set; }
         public string Detalle { get; set; } = string.Empty;
+
+        public Usuario? Usuario { get; set; }
     }
 }
