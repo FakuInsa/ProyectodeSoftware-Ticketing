@@ -367,3 +367,67 @@ header {
         transform: scale(0.9);
     }
 }
+
+/* =========================================
+   MEDIA QUERIES (Responsividad para Móviles)
+   ========================================= */
+@media (max-width: 768px) {
+
+    /* Reducir paddings generales */
+    .container {
+        padding: 1rem;
+    }
+
+    header {
+        padding: 1rem;
+    }
+
+    /* Reducir tamaños de fuente */
+    .section-title {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Ajustar la grilla de eventos para que quepa en pantallas chicas */
+    .events-grid {
+        grid-template-columns: 1fr;
+        /* Una sola columna en móviles */
+        gap: 1rem;
+    }
+
+    .event-card {
+        padding: 1.5rem;
+    }
+
+    /* Ajustar la leyenda de asientos */
+    .seat-legend {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    /* Ajustar los asientos en caso de pantallas muy estrechas */
+    .seat-grid {
+        padding: 1rem;
+        gap: 5px;
+    }
+
+    .seat {
+        width: 28px;
+        height: 28px;
+        font-size: 0.6rem;
+    }
+
+    .sector-container {
+        padding: 1rem;
+    }
+
+    .toast {
+        right: 1rem;
+        bottom: 1rem;
+        left: 1rem;
+        /* Para que ocupe todo el ancho en móvil si es necesario */
+        text-align: center;
+    }
+}
