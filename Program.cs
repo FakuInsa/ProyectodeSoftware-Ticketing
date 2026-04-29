@@ -3,11 +3,7 @@ using Ticketing.Data;
 using Ticketing.Services;
 using Ticketing.DTOs;
 
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    Args = args,
-    WebRootPath = "Frontend"
-});
+var builder = WebApplication.CreateBuilder(args);
 
 
 
@@ -37,10 +33,10 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<SistemaTicketingContext>();
-        
+
         // Ejecutar las migraciones automáticamente (Crea la base de datos y tablas si no existen)
         context.Database.Migrate();
-        
+
         // inicializa la base de datos con datos de prueba
         DbInitializer.Initialize(context);
     }
