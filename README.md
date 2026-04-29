@@ -1,4 +1,4 @@
-### PROYECTO DE SOFTWARE - TICKETING
+# PROYECTO DE SOFTWARE - TICKETING
 
 Requerimientos: Tener instalado Docker Desktop.
 
@@ -37,11 +37,11 @@ Conexión al Servidor de Base de Datos:
 
 Al registrar un nuevo servidor en pgAdmin, utilice estos datos:
 
-# General
+### General
 
 Name: TicketingDB
 
-# Connection
+### Connection
 
 Host name/address: db
 
