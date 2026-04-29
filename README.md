@@ -2,7 +2,8 @@
 
 Requerimientos: Tener instalado Docker Desktop.
 
-Para correr el programa usar el comando : docker-compose up
+Abrir una terminal en la carpeta del proyecto (ProyectodeSoftware-Ticketing).
+Ingresar el comando : docker-compose up 
 
 
 ## Accesos al Sistema
