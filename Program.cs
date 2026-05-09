@@ -18,6 +18,7 @@ builder.Services.AddDbContext<SistemaTicketingContext>(options =>
 // Inyección de Dependencias
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 //para poner swagger porque instalamos .net9 y no viene mas con sawgger
 builder.Services.AddEndpointsApiExplorer();
