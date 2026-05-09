@@ -23,11 +23,12 @@ namespace Ticketing.Services
             var butaca = await _context.Butacas.FirstOrDefaultAsync(b => b.Id == request.ButacaId);
 
             if (butaca == null) return (false, "Butaca no encontrada.", null);
-            if (butaca.Estado != EstadoButaca.Disponible) return (false, "Butaca no disponible.", null);
+            if (butaca.Estado != EstadoButaca.Disponible)return (false, "Butaca no disponible.", null);
+            
+            var versionLeida = butaca.Version;
 
             butaca.Estado = EstadoButaca.Reservada;
             butaca.FechaBloqueo = DateTime.UtcNow;
-            butaca.Version++;
 
             var reserva = new Reserva
             {
@@ -50,7 +51,9 @@ namespace Ticketing.Services
                     "CREATE_RESERVATION",
                     "Butaca",
                     butaca.Id,
-                    $"{{\"mensaje\": \"Reserva creada para butaca {butaca.Id}\"}}"
+                    $"{{\"reservaId\": {reserva.Id}, " +
+                    $"\"expiracion\": \"{reserva.Expiracion:O}\", " +
+                    $"\"versionLeida\": {versionLeida}}}"
                 );
 
                 return (true, "Reserva exitosa.", reserva);
@@ -63,13 +66,22 @@ namespace Ticketing.Services
                     "RESERVATION_FAILED_CONCURRENCY",
                     "Butaca",
                     butaca.Id,
-                    $"{{\"mensaje\": \"Fallo al intentar reservar butaca {butaca.Id} por concurrencia\"}}"
+                    $"{{\"razon\": \"Conflicto de concurrencia\", " +
+                    $"\"versionLeida\": {versionLeida}, " +
+                    $"\"usuarioId\": {request.UsuarioId}}}"
                 );
 
                 return (false, "CONCURRENCY_ERROR", null);
             }
             catch (Exception ex)
             {
+                await _auditService.LogAsync(
+                    request.UsuarioId,
+                    "RESERVE_FAILED_UNEXPECTED",
+                    "Butaca",
+                    butaca.Id,
+                    $"{{\"error\": \"{ex.Message}\"}}"
+                );
                 return (false, $"Error inesperado: {ex.Message}", null);
             }
         }
