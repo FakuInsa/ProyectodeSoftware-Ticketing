@@ -12,9 +12,12 @@
 <body>
     <header class="main-header">
         <div class="logo">TicketPro</div>
-        <button id="cart-toggle-btn" class="cart-toggle-btn" onclick="toggleCart()">
-            🛒 Carrito <span id="cart-count">0</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span style="font-weight: 600;">Usuario</span>
+            <button id="cart-toggle-btn" class="cart-toggle-btn" onclick="toggleCart()">
+                🛒 Carrito <span id="cart-count">0</span>
+            </button>
+        </div>
     </header>
 
     <main class="container">
@@ -44,10 +47,20 @@
             <h2>Tus Reservas</h2>
             <button class="close-cart-btn" onclick="closeCart()">×</button>
         </div>
-        <div id="cart-items" class="cart-items-container">
-            <!-- Items se inyectarán aquí -->
+        <div class="cart-items-container">
+            <h3 style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase;">Activas</h3>
+            <div id="cart-items" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <!-- Items se inyectarán aquí -->
+            </div>
+            
+            <h3 style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase;">Expiradas</h3>
+            <div id="cart-items-expired" style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Items expirados se moverán aquí -->
+            </div>
         </div>
-
+        <div class="cart-footer">
+            <button class="checkout-btn" onclick="payAll()">Pagar Todo</button>
+        </div>
     </aside>
 
     <script src="app.js?v=3"></script>
