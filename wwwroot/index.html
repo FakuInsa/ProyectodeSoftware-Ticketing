@@ -6,12 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticketing System Premium</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
     <header class="main-header">
         <div class="logo">TicketPro</div>
+        <button id="cart-toggle-btn" class="cart-toggle-btn" onclick="toggleCart()">
+            🛒 Carrito <span id="cart-count">0</span>
+        </button>
     </header>
 
     <main class="container">
@@ -35,7 +38,19 @@
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <!-- Cart Drawer -->
+    <aside id="cart-drawer" class="cart-drawer">
+        <div class="cart-header">
+            <h2>Tus Reservas</h2>
+            <button class="close-cart-btn" onclick="closeCart()">×</button>
+        </div>
+        <div id="cart-items" class="cart-items-container">
+            <!-- Items se inyectarán aquí -->
+        </div>
+
+    </aside>
+
+    <script src="app.js?v=3"></script>
 </body>
 
 </html>
