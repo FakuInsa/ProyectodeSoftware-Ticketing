@@ -38,7 +38,7 @@ namespace Ticketing.Controllers
             }
 
             // Si todo salió bien, devolvemos 200 OK
-            return Ok(new { Mensaje = result.Message, ReservaId = result.Reserva?.Id, Expiracion = result.Reserva.Expiracion });
+            return Ok(new { Mensaje = result.Message, ReservaId = result.Reserva?.Id, Expiracion = result.Reserva?.Expiracion });
         }
     }
 }
