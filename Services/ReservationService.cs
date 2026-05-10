@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Ticketing.Data;
 using Ticketing.DTOs;
 using Ticketing.Models;
+using System.Linq;
 
 namespace Ticketing.Services
 {
@@ -139,6 +140,26 @@ namespace Ticketing.Services
             {
                 return (false, $"Error inesperado: {ex.Message}");
             }
+        }
+
+        public async Task<System.Collections.Generic.IEnumerable<object>> GetPendingReservationsAsync(int usuarioId)
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Reservas
+                .Include(r => r.Butaca)
+                .ThenInclude(b => b.Sector)
+                .Where(r => r.UsuarioId == usuarioId && r.Estado == "Pending" && r.Expiracion > now)
+                .Select(r => new {
+                    reservaId = r.Id,
+                    expiracion = r.Expiracion,
+                    butaca = new {
+                        butacaId = r.Butaca.Id,
+                        sectorNombre = r.Butaca.Sector.Nombre,
+                        fila = r.Butaca.Fila,
+                        numeroAsiento = r.Butaca.NumeroAsiento
+                    }
+                })
+                .ToListAsync();
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Ticketing.Jobs
 
         // Cada cuánto corre el job. 60 segundos es razonable, las reservas vencen a los 5 minutos, así que el peor caso
         // es que una butaca tarde 6 minutos en liberarse — aceptable.
-        private readonly TimeSpan _interval = TimeSpan.FromSeconds(60);
+        private readonly TimeSpan _interval = TimeSpan.FromSeconds(30);
         public ReservationExpirationJob(IServiceScopeFactory scopeFactory, ILogger<ReservationExpirationJob> logger)
         {
             _scopeFactory = scopeFactory;
