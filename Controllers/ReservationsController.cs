@@ -40,5 +40,23 @@ namespace Ticketing.Controllers
             // Si todo salió bien, devolvemos 200 OK
             return Ok(new { Mensaje = result.Message, ReservaId = result.Reserva?.Id, Expiracion = result.Reserva?.Expiracion });
         }
+
+        [HttpPost("{id}/cancel")]
+        public async Task<IActionResult> CancelReservation(int id, [FromBody] CancelReservationRequest request)
+        {
+            var result = await _reservationService.CancelReservationAsync(id, request.UsuarioId);
+
+            if (!result.Success)
+            {
+                if (result.Message.Contains("permiso") || result.Message.Contains("encontrada"))
+                {
+                    return NotFound(new { error = result.Message });
+                }
+                
+                return BadRequest(new { error = result.Message });
+            }
+
+            return Ok(new { Mensaje = result.Message });
+        }
     }
 }

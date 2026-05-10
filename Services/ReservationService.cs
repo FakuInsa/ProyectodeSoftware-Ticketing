@@ -85,5 +85,60 @@ namespace Ticketing.Services
                 return (false, $"Error inesperado: {ex.Message}", null);
             }
         }
+
+        public async Task<(bool Success, string Message)> CancelReservationAsync(int reservaId, int usuarioId)
+        {
+            var reserva = await _context.Reservas
+                .Include(r => r.Butaca)
+                .FirstOrDefaultAsync(r => r.Id == reservaId);
+
+            if (reserva == null)
+            {
+                return (false, "Reserva no encontrada.");
+            }
+
+            if (reserva.UsuarioId != usuarioId)
+            {
+                return (false, "No tienes permiso para cancelar esta reserva.");
+            }
+
+            if (reserva.Estado != "Pending")
+            {
+                return (false, "Solo se pueden cancelar reservas en estado pendiente.");
+            }
+
+            reserva.Estado = "Cancelled";
+            
+            if (reserva.Butaca != null)
+            {
+                reserva.Butaca.Estado = EstadoButaca.Disponible;
+                reserva.Butaca.FechaBloqueo = null;
+                reserva.Butaca.Version++;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                // Registrar auditoría exitosa (fuera de la transacción principal para garantizar inmutabilidad)
+                await _auditService.LogAsync(
+                    usuarioId,
+                    "CANCEL_RESERVATION",
+                    "Reserva",
+                    reserva.Id,
+                    $"{{\"mensaje\": \"Reserva {reserva.Id} cancelada por el usuario\"}}"
+                );
+
+                return (true, "Reserva cancelada exitosamente.");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return (false, "Error de concurrencia al intentar cancelar la reserva.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error inesperado: {ex.Message}");
+            }
+        }
     }
 }
