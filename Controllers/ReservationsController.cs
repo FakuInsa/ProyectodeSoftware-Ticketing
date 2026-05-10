@@ -58,5 +58,12 @@ namespace Ticketing.Controllers
 
             return Ok(new { Mensaje = result.Message });
         }
+
+        [HttpGet("user/{usuarioId}/pending")]
+        public async Task<IActionResult> GetPendingReservations(int usuarioId)
+        {
+            var result = await _reservationService.GetPendingReservationsAsync(usuarioId);
+            return Ok(result);
+        }
     }
 }
