@@ -7,8 +7,26 @@ const activeTimers = {};
 
 document.addEventListener('DOMContentLoaded', () => {
     loadEvents();
+    loadPendingReservations();
     document.getElementById('back-btn').addEventListener('click', showEventsSection);
 });
+
+async function loadPendingReservations() {
+    try {
+        const response = await fetch(`${API_BASE}/reservations/user/1/pending`);
+        if (response.ok) {
+            const pending = await response.json();
+            pending.forEach(p => {
+                // Solo agregar si no existe ya
+                if (!document.getElementById(`cart-item-${p.reservaId}`)) {
+                    addCartItem(p.butaca, p.reservaId, p.expiracion);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando reservas pendientes:', error);
+    }
+}
 
 // =========================================
 // EVENTOS
@@ -246,12 +264,21 @@ function startTimer(reservaId, expiracion) {
             }
 
             const cartItem = document.getElementById(`cart-item-${reservaId}`);
-            if (cartItem) cartItem.classList.add('item-expired');
+            if (cartItem) {
+                cartItem.classList.add('item-expired');
+                
+                // Quitamos el botón de remover
+                const removeBtn = cartItem.querySelector('.remove-item-btn');
+                if (removeBtn) removeBtn.remove();
+                
+                // Lo movemos a la sección de expiradas
+                const expiredContainer = document.getElementById('cart-items-expired');
+                if (expiredContainer) expiredContainer.appendChild(cartItem);
+            }
 
+            updateCartCount(-1);
             showToast('⏰ Tiempo agotado. Tu reserva fue liberada.', 'error');
 
-            // El Background Job ya liberó la butaca en el servidor,
-            // refrescamos el mapa para que quede verde nuevamente
             refreshSeatMap();
             return;
         }
@@ -270,20 +297,34 @@ function startTimer(reservaId, expiracion) {
     activeTimers[reservaId] = setInterval(tick, 1000);
 }
 
-function removeCartItem(reservaId) {
-    // Cancelamos el interval antes de remover el elemento del DOM
-    // para evitar memory leaks y referencias a elementos inexistentes
-    if (activeTimers[reservaId]) {
-        clearInterval(activeTimers[reservaId]);
-        delete activeTimers[reservaId];
+async function removeCartItem(reservaId) {
+    try {
+        const response = await fetch(`${API_BASE}/reservations/${reservaId}/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuarioId: 1 })
+        });
+        
+        const data = await response.json();
+
+        if (response.ok) {
+            if (activeTimers[reservaId]) {
+                clearInterval(activeTimers[reservaId]);
+                delete activeTimers[reservaId];
+            }
+
+            const cartItem = document.getElementById(`cart-item-${reservaId}`);
+            if (cartItem) cartItem.remove();
+
+            updateCartCount(-1);
+            showToast('Reserva cancelada exitosamente.', 'success');
+            refreshSeatMap();
+        } else {
+            showToast(data?.error || 'Error al cancelar la reserva.', 'error');
+        }
+    } catch (error) {
+        showToast('Error de conexión al cancelar.', 'error');
     }
-
-    const cartItem = document.getElementById(`cart-item-${reservaId}`);
-    if (cartItem) cartItem.remove();
-
-    updateCartCount(-1);
-    showToast('Reserva eliminada del carrito.', 'success');
-    refreshSeatMap();
 }
 
 // =========================================
@@ -316,4 +357,50 @@ function openCart() {
 
 function closeCart() {
     document.getElementById('cart-drawer').classList.remove('open');
+}
+
+async function payAll() {
+    const cartItems = document.getElementById('cart-items').children;
+    if (cartItems.length === 0) {
+        showToast('El carrito está vacío.', 'error');
+        return;
+    }
+
+    const reservaIds = Array.from(cartItems).map(item => parseInt(item.id.replace('cart-item-', '')));
+    
+    let successCount = 0;
+    for (const reservaId of reservaIds) {
+        try {
+            const response = await fetch(`${API_BASE}/payments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reservaId: reservaId, usuarioId: 1 }) // usuarioId harcodeado a 1
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                if (activeTimers[reservaId]) {
+                    clearInterval(activeTimers[reservaId]);
+                    delete activeTimers[reservaId];
+                }
+                const cartItem = document.getElementById(`cart-item-${reservaId}`);
+                if (cartItem) cartItem.remove();
+                updateCartCount(-1);
+                successCount++;
+            } else {
+                showToast(data?.error || `Error al pagar reserva #${reservaId}`, 'error');
+            }
+        } catch (error) {
+            showToast(`Error de conexión al pagar reserva #${reservaId}`, 'error');
+        }
+    }
+    
+    if (successCount > 0) {
+        showToast(`¡${successCount} pago(s) exitoso(s)!`, 'success');
+        refreshSeatMap();
+        if (document.getElementById('cart-items').children.length === 0) {
+            closeCart();
+        }
+    }
 }
