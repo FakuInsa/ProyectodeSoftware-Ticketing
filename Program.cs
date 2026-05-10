@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Ticketing.Data;
 using Ticketing.Services;
 using Ticketing.DTOs;
+using Ticketing.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.Services.AddDbContext<SistemaTicketingContext>(options =>
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddHostedService<ReservationExpirationJob>();
 
 //para poner swagger porque instalamos .net9 y no viene mas con sawgger
 builder.Services.AddEndpointsApiExplorer();
