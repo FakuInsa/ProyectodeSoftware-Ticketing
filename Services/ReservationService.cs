@@ -24,8 +24,8 @@ namespace Ticketing.Services
             var butaca = await _context.Butacas.FirstOrDefaultAsync(b => b.Id == request.ButacaId);
 
             if (butaca == null) return (false, "Butaca no encontrada.", null);
-            if (butaca.Estado != EstadoButaca.Disponible)return (false, "Butaca no disponible.", null);
-            
+            if (butaca.Estado != EstadoButaca.Disponible) return (false, "Butaca no disponible.", null);
+
             var versionLeida = butaca.Version;
 
             butaca.Estado = EstadoButaca.Reservada;
@@ -109,7 +109,7 @@ namespace Ticketing.Services
             }
 
             reserva.Estado = "Cancelled";
-            
+
             if (reserva.Butaca != null)
             {
                 reserva.Butaca.Estado = EstadoButaca.Disponible;
@@ -147,14 +147,16 @@ namespace Ticketing.Services
             var now = DateTime.UtcNow;
             return await _context.Reservas
                 .Include(r => r.Butaca)
-                    .ThenInclude(b => b.Sector)
-                    .ThenInclude(s => s.Evento)          // ← navigamos hasta Evento
+                    .ThenInclude(b => b!.Sector)
+                    .ThenInclude(s => s!.Evento)          // ← navigamos hasta Evento
                 .Where(r => r.UsuarioId == usuarioId && r.Estado == "Pending" && r.Expiracion > now)
-                .Select(r => new {
+                .Select(r => new
+                {
                     reservaId = r.Id,
                     expiracion = r.Expiracion,
-                    eventoNombre = r.Butaca!.Sector.Evento.Nombre,  // ← nombre del evento
-                    butaca = new {
+                    eventoNombre = r.Butaca!.Sector.Evento.Nombre,  // ← nombre del evento para el front
+                    butaca = new
+                    {
                         butacaId = r.Butaca.Id,
                         sectorNombre = r.Butaca.Sector.Nombre,
                         fila = r.Butaca.Fila,
