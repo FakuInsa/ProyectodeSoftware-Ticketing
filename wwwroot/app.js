@@ -1,5 +1,6 @@
 const API_BASE = '/api/v1';
 let currentEventId = null;
+let currentEventName = null;//para que se vea en la reserva
 
 // Guardamos los intervals por reservaId para poder cancelarlos
 // cuando el usuario remueve un item o expira el tiempo
@@ -8,7 +9,21 @@ const activeTimers = {};
 document.addEventListener('DOMContentLoaded', () => {
     loadEvents();
     loadPendingReservations();
+    initSeatMapClickDelegation();
     document.getElementById('back-btn').addEventListener('click', showEventsSection);
+
+    // Listeners estáticos del header y el drawer — sin onclick= en el HTML
+    document.getElementById('cart-toggle-btn').addEventListener('click', toggleCart);
+    document.getElementById('close-cart-btn').addEventListener('click', closeCart);
+    document.getElementById('pay-all-btn').addEventListener('click', payAll);
+
+    // Delegación para los botones de cancelar (se crean dinámicamente en addCartItem)
+    document.getElementById('cart-items').addEventListener('click', e => {
+        const btn = e.target.closest('.remove-item-btn');
+        if (!btn) return;
+        const reservaId = parseInt(btn.dataset.reservaId, 10);
+        if (reservaId) removeCartItem(reservaId);
+    });
 });
 
 async function loadPendingReservations() {
@@ -19,7 +34,7 @@ async function loadPendingReservations() {
             pending.forEach(p => {
                 // Solo agregar si no existe ya
                 if (!document.getElementById(`cart-item-${p.reservaId}`)) {
-                    addCartItem(p.butaca, p.reservaId, p.expiracion);
+                    addCartItem(p.butaca, p.reservaId, p.expiracion, p.eventoNombre);
                 }
             });
         }
@@ -76,6 +91,7 @@ function showSeatMapSection(eventTitle) {
 
 async function loadSeatMap(event) {
     currentEventId = event.id;
+    currentEventName = event.nombre;
     showSeatMapSection(event.nombre);
     try {
         const response = await fetch(`${API_BASE}/events/${event.id}/seats`);
@@ -86,14 +102,16 @@ async function loadSeatMap(event) {
     }
 }
 
-// =========================================
-// MAPA DE ASIENTOS
-// =========================================
+// Mapa en memoria para la delegación de eventos: butacaId -> objeto seat completo.
+// Se reconstruye con cada llamada a renderSeatMap.
+const seatRegistry = new Map();
 
 function renderSeatMap(seats) {
     const container = document.getElementById('seat-grid-container');
     container.innerHTML = '';
+    seatRegistry.clear();
 
+    // --- Agrupación ---
     const sectors = {};
     seats.forEach(seat => {
         if (!sectors[seat.sectorNombre]) sectors[seat.sectorNombre] = [];
@@ -105,6 +123,9 @@ function renderSeatMap(seats) {
         if (b.toLowerCase().includes('campo')) return 1;
         return 0;
     });
+
+    // --- Construcción en un DocumentFragment (sin tocar el DOM real) ---
+    const fragment = document.createDocumentFragment();
 
     orderedSectorNames.forEach(sectorName => {
         const sectorDiv = document.createElement('div');
@@ -132,17 +153,37 @@ function renderSeatMap(seats) {
                 seatEl.textContent = seat.numeroAsiento;
 
                 if (seat.estado === 'Disponible') {
-                    seatEl.addEventListener('click', () => reserveSeat(seat, seatEl));
+                    // Guardamos el objeto completo en el registro para la delegación
+                    seatEl.dataset.butacaId = seat.butacaId;
+                    seatRegistry.set(String(seat.butacaId), seat);
                 }
+
                 rowDiv.appendChild(seatEl);
             });
 
             sectorDiv.appendChild(rowDiv);
         });
 
-        container.appendChild(sectorDiv);
+        fragment.appendChild(sectorDiv); // Va al fragment, no al DOM real
+    });
+
+    // --- 1 solo Repaint: inyectamos todo de una sola vez ---
+    container.appendChild(fragment);
+}
+
+// Listener delegado: UNO solo para toda la grilla, registrado en DOMContentLoaded.
+// Captura clicks en cualquier butaca disponible sin importar cuántas haya.
+function initSeatMapClickDelegation() {
+    const container = document.getElementById('seat-grid-container');
+    container.addEventListener('click', e => {
+        const seatEl = e.target.closest('.seat.disponible');
+        if (!seatEl) return;
+
+        const seat = seatRegistry.get(seatEl.dataset.butacaId);
+        if (seat) reserveSeat(seat, seatEl);
     });
 }
+
 
 async function refreshSeatMap() {
     if (!currentEventId) return;
@@ -192,7 +233,7 @@ async function reserveSeat(seat, seatElement) {
 
         // Usamos data.expiracion del servidor — nunca calculamos el tiempo
         // en el cliente para evitar desfases entre relojes
-        addCartItem(seat, data.reservaId, data.expiracion);
+        addCartItem(seat, data.reservaId, data.expiracion, currentEventName);
         showToast('¡Reserva exitosa! Revisá tu carrito 🎟', 'success');
 
     } else if (status === 409) {
@@ -219,7 +260,7 @@ function updateCartCount(delta) {
     document.getElementById('cart-count').textContent = cartCount;
 }
 
-function addCartItem(seat, reservaId, expiracion) {
+function addCartItem(seat, reservaId, expiracion, eventoNombre) {
     const cartContainer = document.getElementById('cart-items');
 
     const cartItem = document.createElement('div');
@@ -228,12 +269,12 @@ function addCartItem(seat, reservaId, expiracion) {
 
     cartItem.innerHTML = `
         <div class="cart-item-info">
-            <h4>Reserva #${reservaId}</h4>
+           <h4>${eventoNombre ?? 'Evento'}</h4> 
             <p>Sector ${seat.sectorNombre} — Fila ${seat.fila}, Butaca ${seat.numeroAsiento}</p>
         </div>
         <div class="cart-item-actions">
-            <button class="remove-item-btn" 
-                    onclick="removeCartItem(${reservaId})" 
+            <button class="remove-item-btn"
+                    data-reserva-id="${reservaId}"
                     title="Quitar reserva">×</button>
             <div class="cart-item-timer" id="timer-${reservaId}">05:00</div>
         </div>
@@ -266,11 +307,11 @@ function startTimer(reservaId, expiracion) {
             const cartItem = document.getElementById(`cart-item-${reservaId}`);
             if (cartItem) {
                 cartItem.classList.add('item-expired');
-                
+
                 // Quitamos el botón de remover
                 const removeBtn = cartItem.querySelector('.remove-item-btn');
                 if (removeBtn) removeBtn.remove();
-                
+
                 // Lo movemos a la sección de expiradas
                 const expiredContainer = document.getElementById('cart-items-expired');
                 if (expiredContainer) expiredContainer.appendChild(cartItem);
@@ -304,7 +345,7 @@ async function removeCartItem(reservaId) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuarioId: 1 })
         });
-        
+
         const data = await response.json();
 
         if (response.ok) {
@@ -367,7 +408,7 @@ async function payAll() {
     }
 
     const reservaIds = Array.from(cartItems).map(item => parseInt(item.id.replace('cart-item-', '')));
-    
+
     let successCount = 0;
     for (const reservaId of reservaIds) {
         try {
@@ -376,9 +417,9 @@ async function payAll() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reservaId: reservaId, usuarioId: 1 }) // usuarioId harcodeado a 1
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok) {
                 if (activeTimers[reservaId]) {
                     clearInterval(activeTimers[reservaId]);
@@ -395,7 +436,7 @@ async function payAll() {
             showToast(`Error de conexión al pagar reserva #${reservaId}`, 'error');
         }
     }
-    
+
     if (successCount > 0) {
         showToast(`¡${successCount} pago(s) exitoso(s)!`, 'success');
         refreshSeatMap();

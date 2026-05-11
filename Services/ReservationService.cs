@@ -147,11 +147,13 @@ namespace Ticketing.Services
             var now = DateTime.UtcNow;
             return await _context.Reservas
                 .Include(r => r.Butaca)
-                .ThenInclude(b => b.Sector)
+                    .ThenInclude(b => b.Sector)
+                    .ThenInclude(s => s.Evento)          // ← navigamos hasta Evento
                 .Where(r => r.UsuarioId == usuarioId && r.Estado == "Pending" && r.Expiracion > now)
                 .Select(r => new {
                     reservaId = r.Id,
                     expiracion = r.Expiracion,
+                    eventoNombre = r.Butaca!.Sector.Evento.Nombre,  // ← nombre del evento
                     butaca = new {
                         butacaId = r.Butaca.Id,
                         sectorNombre = r.Butaca.Sector.Nombre,
