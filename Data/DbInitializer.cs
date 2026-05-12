@@ -8,14 +8,17 @@ namespace Ticketing.Data
     {
         public static void Initialize(SistemaTicketingContext context)
         {
+            // Creamos el usuario de prueba con una contraseña encriptada
             var usuario = new Usuario
             {
                 Nombre = "Usuario Test",
                 Email = "test@example.com",
-                GoogleSubjectId = "dev_mock_123"
+                // Hasheamos "test1234" para que puedas usarla en el frontend
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("test1234")
             };
 
-            if (!context.Usuarios.Any(u => u.GoogleSubjectId == usuario.GoogleSubjectId))
+            // Verificamos por Email en lugar de GoogleSubjectId
+            if (!context.Usuarios.Any(u => u.Email == usuario.Email))
             {
                 context.Usuarios.Add(usuario);
                 context.SaveChanges();

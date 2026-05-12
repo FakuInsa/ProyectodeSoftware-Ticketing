@@ -5,7 +5,7 @@ namespace Ticketing.Data
 {
     public class SistemaTicketingContext : DbContext
     {
-        public SistemaTicketingContext(DbContextOptions<SistemaTicketingContext> options) 
+        public SistemaTicketingContext(DbContextOptions<SistemaTicketingContext> options)
             : base(options)
         {
         }
@@ -24,8 +24,8 @@ namespace Ticketing.Data
             // Configuración de Claves Primarias y Validaciones mediante Fluent API
             // Evento
             modelBuilder.Entity<Evento>()
-                .HasKey(e => e.Id);// Referencia e --> al evento
-            
+                .HasKey(e => e.Id); // Referencia e --> al evento
+
             modelBuilder.Entity<Evento>()
                 .Property(e => e.Nombre)
                 .IsRequired()
@@ -34,11 +34,11 @@ namespace Ticketing.Data
             // Sector
             modelBuilder.Entity<Sector>()
                 .HasKey(s => s.Id);
-            
+
             modelBuilder.Entity<Sector>()
                 .Property(s => s.Precio)
                 .HasColumnType("decimal(18,2)"); // Para precios
-                
+
             modelBuilder.Entity<Sector>()
                 .HasOne(s => s.Evento)
                 .WithMany()
@@ -83,15 +83,33 @@ namespace Ticketing.Data
                 .HasForeignKey(a => a.UsuarioId)
                 .IsRequired(false); // Porque UsuarioId es nullable (int?)
 
-            // Usuario
+            // ==========================================
+            // USUARIO (Actualizado sin Google Auth)
+            // ==========================================
             modelBuilder.Entity<Usuario>()
                 .HasKey(u => u.Id);
-            
+
+            // Hacemos que el Email sea único en la base de datos
             modelBuilder.Entity<Usuario>()
-                .Property(u => u.GoogleSubjectId)
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.Email)
                 .IsRequired()
-                .HasMaxLength(255);
-                
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.Nombre)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.PasswordHash)
+                .IsRequired();
+
+            // ==========================================
+
             modelBuilder.Entity<Reserva>()
                 .HasOne(r => r.Butaca)
                 .WithMany()

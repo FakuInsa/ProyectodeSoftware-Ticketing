@@ -12,11 +12,12 @@
 <body>
     <header class="main-header">
         <div class="logo">TicketPro</div>
-        <div class="header-actions">
-            <span style="font-weight: 600;">Usuario</span>
-            <button id="cart-toggle-btn" class="cart-toggle-btn">
-                🛒 Carrito <span id="cart-count">0</span>
-            </button>
+
+        <div id="user-section" class="header-actions" style="display: none; align-items: center; gap: 15px;">
+            <span id="user-name-display" style="font-weight: 600;">Usuario</span>
+            <button id="cart-toggle-btn" class="cart-toggle-btn">🛒 Carrito <span id="cart-count">0</span></button>
+            <button id="btn-salir"
+                style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">Salir</button>
         </div>
     </header>
 
@@ -29,6 +30,7 @@
 
         <section id="seat-map-section" class="hidden">
             <button id="back-btn" class="btn-secondary">← Volver</button>
+            <button id="cancel-operation-btn" class="btn-secondaryb">Cancelar</button>
             <h2 id="event-title">Cargando...</h2>
 
             <div class="seat-legend">
@@ -64,6 +66,45 @@
             <button id="pay-all-btn" class="checkout-btn">Pagar Todo</button>
         </div>
     </aside>
+
+    <div id="qty-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 300px; text-align: center;">
+            <button id="close-qty-btn" class="close-btn">×</button>
+            <h2 style="margin-top: 0; color: #fff;">¿Cuántas entradas?</h2>
+            <p style="color: #888; margin-bottom: 20px;">Seleccioná la cantidad de butacas que vas a reservar.</p>
+
+            <div class="auth-form">
+                <input type="number" id="ticket-qty-input" min="1" max="10" value="1"
+                    style="text-align: center; font-size: 1.2rem;">
+                <button id="confirm-qty-btn" class="submit-btn">Continuar al Mapa</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1.5rem; color: #fff;">Bienvenido a TicketPro
+            </h2>
+
+            <div class="modal-tabs">
+                <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">Ingresar</button>
+                <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">Registrarse</button>
+            </div>
+
+            <div id="form-login" class="auth-form">
+                <input type="email" id="auth-email-login" placeholder="Correo electrónico">
+                <input type="password" id="auth-password-login" placeholder="Contraseña">
+                <button class="submit-btn" onclick="submitAuth('login')">Iniciar Sesión</button>
+            </div>
+
+            <div id="form-register" class="auth-form" style="display: none;">
+                <input type="text" id="auth-nombre-reg" placeholder="Tu Nombre y Apellido">
+                <input type="email" id="auth-email-reg" placeholder="Correo electrónico">
+                <input type="password" id="auth-password-reg" placeholder="Crea una contraseña">
+                <button class="submit-btn" onclick="submitAuth('register')">Crear cuenta</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="app.js?v=3"></script>
 </body>

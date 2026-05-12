@@ -9,6 +9,8 @@
     --seat-sold: #ef4444;
 
     --card-bg: rgba(255, 255, 255, 0.05);
+    --card-bg-b: rgba(77, 14, 14, 0.87);
+    --card-bg-b2: rgba(165, 23, 23, 0.76);
     --card-border: rgba(255, 255, 255, 0.1);
 
     --accent-dark: #4f46e5;
@@ -138,21 +140,7 @@ body {
 
 
 
-.toast {
-    position: fixed;
-    bottom: 2rem;
-    left: 2rem;
-    padding: 1rem 1.5rem;
-    background: var(--card-bg);
-    border-radius: 8px;
-    color: white;
-    transform: translateX(-120%);
-    transition: transform 0.3s ease;
-}
 
-.toast.show {
-    transform: translateX(0);
-}
 
 /* Seat Map */
 .seat-legend {
@@ -254,6 +242,26 @@ body {
     background: var(--card-bg);
 }
 
+/* Botón con color de alerta */
+.btn-secondaryb {
+    background: rgba(239, 68, 68, 0.2);
+    /* Fondo rojizo */
+    border: 1px solid var(--seat-sold);
+    color: var(--seat-sold);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-bottom: 2rem;
+}
+
+.btn-secondaryb:hover {
+    background: var(--seat-sold);
+    color: white;
+}
+
 /* Animaciones */
 @keyframes fadeIn {
     from {
@@ -327,7 +335,41 @@ body {
     font-style: italic;
 }
 
-/* Toast Notification Tipos */
+/* =========================================
+   TOAST NOTIFICATIONS
+   ========================================= */
+
+/* Estado base del Toast (Oculto pero listo para saltar) */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    /* Ubicación en la esquina inferior izquierda */
+    right: auto;
+    width: max-content;
+    max-width: 400px;
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+/* Estado visible (Cuando JS le agrega la clase 'show') */
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Toast Notification Tipos (Respetando tus variables) */
 .toast.success {
     border-left: 5px solid var(--seat-available);
 }
@@ -670,4 +712,126 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+/* =========================================
+   MODAL DE AUTENTICACIÓN (POP-UP)
+   ========================================= */
+
+/* Bloquea toda la pantalla con fondo oscuro y desenfocado */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+
+    /* Centrado absoluto */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* La caja principal del formulario */
+.modal-content {
+    background: #111111;
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    border: 1px solid #333;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Botón de cerrar la X */
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: transparent;
+    color: #888;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: #ef4444;
+    /* Rojo al pasar el mouse */
+}
+
+/* Pestañas (Ingresar / Registrarse) */
+.modal-tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    background: transparent;
+    color: #888;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.2s;
+}
+
+.tab-btn:hover {
+    color: #fff;
+}
+
+.tab-btn.active {
+    color: white;
+    border-bottom: 2px solid #4CAF50;
+    /* Línea verde debajo de la activa */
+}
+
+/* Formulario por dentro */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form input {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    /* Borde verde al escribir */
+}
+
+.auth-form .submit-btn {
+    background: #4CAF50;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+
+.auth-form .submit-btn:hover {
+    background: #45a049;
 }
