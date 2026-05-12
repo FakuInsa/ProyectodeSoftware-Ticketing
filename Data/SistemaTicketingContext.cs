@@ -16,6 +16,7 @@ namespace Ticketing.Data
         public DbSet<Reserva> Reservas { get; set; }
         public DbSet<Auditoria> Auditorias { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<SesionReserva> SesionesReserva { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -119,6 +120,30 @@ namespace Ticketing.Data
                 .HasOne(r => r.Usuario)
                 .WithMany()
                 .HasForeignKey(r => r.UsuarioId);
+
+            // ==========================================
+            // SESIONES
+            // ==========================================
+            modelBuilder.Entity<SesionReserva>()
+                .HasKey(s => s.Id);
+
+            modelBuilder.Entity<SesionReserva>()
+                .HasOne(s => s.Usuario)
+                .WithMany()
+                .HasForeignKey(s => s.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SesionReserva>()
+                .HasOne(s => s.Evento)
+                .WithMany()
+                .HasForeignKey(s => s.EventoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reserva>()
+                .HasOne(r => r.Sesion)
+                .WithMany(s => s.Reservas)
+                .HasForeignKey(r => r.SesionId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
