@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticketing System Premium</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 
 <body>
     <header class="main-header">
         <div class="logo">TicketPro</div>
-
         <div id="user-section" class="header-actions hidden">
             <div class="user-dropdown">
                 <span id="user-name-display" class="user-name">Usuario</span>
@@ -20,15 +19,14 @@
                     <button id="btn-salir" class="btn-logout">Cerrar Sesión</button>
                 </div>
             </div>
-            <button id="cart-toggle-btn" class="cart-toggle-btn"> Carrito <span id="cart-count">0</span></button>
+            <button id="cart-toggle-btn" class="cart-toggle-btn">Carrito <span id="cart-count">0</span></button>
         </div>
     </header>
 
     <main class="container">
         <section id="events-section">
             <h1 class="section-title">Próximos Eventos</h1>
-            <div id="events-container" class="events-grid">
-            </div>
+            <div id="events-container" class="events-grid"></div>
         </section>
 
         <section id="seat-map-section" class="hidden">
@@ -54,22 +52,17 @@
         </section>
     </main>
 
-    <!-- Cart Drawer -->
     <aside id="cart-drawer" class="cart-drawer">
         <div class="cart-header">
             <h2>Tus Reservas</h2>
-            <button id="close-cart-btn" class="close-cart-btn">×</button>
+            <button id="close-cart-btn" class="close-cart-btn">&times;</button>
         </div>
         <div class="cart-items-container">
             <h3 class="cart-section-label">Activas</h3>
-            <div id="cart-items" class="cart-items-list">
-                <!-- Items se inyectarán aquí -->
-            </div>
+            <div id="cart-items" class="cart-items-list"></div>
 
             <h3 class="cart-section-label">Expiradas</h3>
-            <div id="cart-items-expired" class="cart-items-list">
-                <!-- Items expirados se moverán aquí -->
-            </div>
+            <div id="cart-items-expired" class="cart-items-list"></div>
         </div>
         <div class="cart-footer">
             <button id="pay-all-btn" class="checkout-btn">Pagar Todo</button>
@@ -78,10 +71,9 @@
 
     <div id="qty-modal" class="modal-overlay hidden">
         <div class="modal-content qty-modal-content">
-            <button id="close-qty-btn" class="close-btn">×</button>
+            <button id="close-qty-btn" class="close-btn">&times;</button>
             <h2 class="modal-title">¿Cuántas entradas?</h2>
-            <p class="modal-subtitle">Seleccioná la cantidad de butacas que vas a reservar para este evento.</p>
-
+            <p class="modal-subtitle">Seleccioná la cantidad de butacas a reservar.</p>
             <div class="auth-form">
                 <input type="number" id="ticket-qty-input" min="1" max="10" value="1" class="qty-input">
                 <button id="confirm-qty-btn" class="submit-btn">Comenzar Sesión de Compra</button>
@@ -92,20 +84,17 @@
     <div id="auth-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="modal-title">Bienvenido a TicketPro</h2>
-
             <div class="modal-tabs">
                 <button id="tab-login" class="tab-btn active">Ingresar</button>
                 <button id="tab-register" class="tab-btn">Registrarse</button>
             </div>
-
             <div id="form-login" class="auth-form">
                 <input type="email" id="auth-email-login" placeholder="Correo electrónico">
                 <input type="password" id="auth-password-login" placeholder="Contraseña">
                 <button id="btn-submit-login" class="submit-btn">Iniciar Sesión</button>
             </div>
-
             <div id="form-register" class="auth-form hidden">
-                <input type="text" id="auth-nombre-reg" placeholder="Tu Nombre y Apellido">
+                <input type="text" id="auth-nombre-reg" placeholder="Nombre">
                 <input type="email" id="auth-email-reg" placeholder="Correo electrónico">
                 <input type="password" id="auth-password-reg" placeholder="Crea una contraseña">
                 <button id="btn-submit-register" class="submit-btn">Crear cuenta</button>
@@ -116,9 +105,8 @@
     <div id="payment-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <button id="close-payment-btn" class="close-btn">&times;</button>
-            <h2 class="modal-title">Simulación de Pago</h2>
-            <p class="modal-subtitle">Ingresá los datos de tu tarjeta para finalizar la compra.</p>
-            
+            <h2 class="modal-title">Pago</h2>
+            <p class="modal-subtitle">Ingresá los datos de tu tarjeta.</p>
             <div id="payment-form" class="auth-form">
                 <input type="text" id="card-number" placeholder="Número de Tarjeta (16 dígitos)" maxlength="16">
                 <div class="payment-row">
@@ -129,8 +117,9 @@
             </div>
         </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <script type="module" src="app.js?v=5"></script>
+    <script type="module" src="app.js?v=6"></script>
 </body>
 
 </html>
