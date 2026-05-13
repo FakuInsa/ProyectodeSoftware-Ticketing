@@ -3,6 +3,7 @@ using Ticketing.Data;
 using Ticketing.Services;
 using Ticketing.DTOs;
 using Ticketing.Jobs;
+using Ticketing.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddHostedService<ReservationExpirationJob>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSignalR();
 
 //para poner swagger porque instalamos .net9 y no viene mas con sawgger
 builder.Services.AddEndpointsApiExplorer();
@@ -57,5 +59,6 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<TicketingHub>("/ticketingHub");
 
 app.Run();
