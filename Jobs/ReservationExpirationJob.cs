@@ -69,67 +69,64 @@ namespace Ticketing.Jobs
             // 1. Estado "Pending" 
             // 2. Expiracion < ahora — superaron los 5 minutos
             // 3. Incluimos la Butaca para poder cambiar su estado en la misma query
-            var reservasVencidas = await context.Reservas
-                .Include(r => r.Butaca)
-                .Where(r => r.Estado == "Pending" && r.Expiracion < ahora)
+            var sesionesVencidas = await context.SesionesReserva
+                .Include(s => s.Reservas)
+                    .ThenInclude(r => r.Butaca)
+                .Where(s => s.Estado == "Activa" && s.ExpiracionGlobal < ahora)
                 .ToListAsync();
 
-            if (!reservasVencidas.Any())
+            if (!sesionesVencidas.Any())
             {
-                _logger.LogInformation(
-                    "[Job] {Hora} — Sin reservas vencidas.", ahora);
+                _logger.LogInformation("[Job] {Hora} — Sin sesiones vencidas.", ahora);
                 return;
             }
 
-            _logger.LogInformation(
-                "[Job] {Hora} — Procesando {Cantidad} reservas vencidas.",
-                ahora, reservasVencidas.Count);
+            _logger.LogInformation("[Job] {Hora} — Procesando {Cantidad} sesiones vencidas.", ahora, sesionesVencidas.Count);
 
-            // Procesamos cada reserva vencida individualmente.
-            // Usamos try/catch por reserva para que si una falla,
-            // las demás sigan procesándose igual.
-            foreach (var reserva in reservasVencidas)
+            foreach (var sesion in sesionesVencidas)
             {
                 using var transaction = await context.Database.BeginTransactionAsync();
 
                 try
                 {
-                    // Operación 1: liberar la butaca
-                    reserva.Butaca!.Estado = EstadoButaca.Disponible;
-                    reserva.Butaca.FechaBloqueo = null;
+                    sesion.Estado = "Cancelada"; // Marcamos la sesión como inactiva/cancelada por expiración
 
-                    // Operación 2: marcar la reserva como expirada
-                    reserva.Estado = "Expired";
+                    foreach (var reserva in sesion.Reservas)
+                    {
+                        if (reserva.Estado == "Pending")
+                        {
+                            reserva.Estado = "Expired";
+                            if (reserva.Butaca != null)
+                            {
+                                reserva.Butaca.Estado = EstadoButaca.Disponible;
+                                reserva.Butaca.FechaBloqueo = null;
+                            }
+                        }
+                    }
 
                     await context.SaveChangesAsync();
 
-                    // Operación 3: registrar en auditoría
-                    // UsuarioId null indica que la acción la hizo el sistema,
-                    // no un usuario — el TP lo menciona explícitamente.
+                    // Registrar en auditoría
                     await auditService.LogAsync(
                         null,
-                        "RESERVATION_EXPIRED",
-                        "Reserva",
-                        reserva.Id,
-                        $"{{\"reservaId\": {reserva.Id}, " +
-                        $"\"butacaId\": {reserva.ButacaId}, " +
-                        $"\"usuarioId\": {reserva.UsuarioId}, " +
-                        $"\"expiracion\": \"{reserva.Expiracion:O}\", " +
+                        "SESSION_EXPIRED",
+                        "SesionReserva",
+                        sesion.Id,
+                        $"{{\"sesionId\": {sesion.Id}, " +
+                        $"\"reservasLiberadas\": {sesion.Reservas.Count}, " +
+                        $"\"expiracionGlobal\": \"{sesion.ExpiracionGlobal:O}\", " +
                         $"\"liberadaEn\": \"{ahora:O}\"}}"
                     );
 
                     await transaction.CommitAsync();
 
-                    _logger.LogInformation(
-                        "[Job] Reserva {ReservaId} — butaca {ButacaId} liberada.",
-                        reserva.Id, reserva.ButacaId);
+                    _logger.LogInformation("[Job] Sesion {SesionId} expirada y {Cantidad} butacas liberadas.", sesion.Id, sesion.Reservas.Count);
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
 
-                    _logger.LogError(ex,
-                        "[Job] Error liberando reserva {ReservaId}.", reserva.Id);
+                    _logger.LogError(ex, "[Job] Error liberando sesión {SesionId}.", sesion.Id);
                 }
             }
         }

@@ -21,6 +21,11 @@ namespace Ticketing.Services
 
         public async Task<(bool Success, string Message, Reserva? Reserva)> CreateReservationAsync(CreateReservationRequest request)
         {
+            var sesion = await _context.SesionesReserva.Include(s => s.Reservas).FirstOrDefaultAsync(s => s.Id == request.SesionId);
+
+            if (sesion == null || sesion.Estado != "Activa" || sesion.ExpiracionGlobal <= DateTime.UtcNow) return (false, "Sesión no válida o expirada.", null);
+            if (sesion.Reservas.Count >= sesion.LimiteElegido) return (false, "Límite de entradas excedido.", null);
+
             var butaca = await _context.Butacas.FirstOrDefaultAsync(b => b.Id == request.ButacaId);
 
             if (butaca == null) return (false, "Butaca no encontrada.", null);
@@ -34,9 +39,9 @@ namespace Ticketing.Services
             var reserva = new Reserva
             {
                 ButacaId = request.ButacaId,
-                UsuarioId = request.UsuarioId,
+                UsuarioId = sesion.UsuarioId,
+                SesionId = request.SesionId,
                 FechaCreacion = DateTime.UtcNow,
-                Expiracion = DateTime.UtcNow.AddMinutes(5),
                 Estado = "Pending"
             };
 
@@ -48,14 +53,16 @@ namespace Ticketing.Services
 
                 // Registrar auditoría exitosa (fuera de la transacción principal para garantizar inmutabilidad)
                 await _auditService.LogAsync(
-                    request.UsuarioId,
+                    sesion.UsuarioId,
                     "CREATE_RESERVATION",
                     "Butaca",
                     butaca.Id,
                     $"{{\"reservaId\": {reserva.Id}, " +
-                    $"\"expiracion\": \"{reserva.Expiracion:O}\", " +
+                    $"\"sesionId\": {reserva.SesionId}, " +
                     $"\"versionLeida\": {versionLeida}}}"
                 );
+
+                
 
                 return (true, "Reserva exitosa.", reserva);
             }
@@ -63,13 +70,13 @@ namespace Ticketing.Services
             {
                 // Registrar auditoría fallida por concurrencia
                 await _auditService.LogAsync(
-                    request.UsuarioId,
+                    sesion.UsuarioId,
                     "RESERVATION_FAILED_CONCURRENCY",
                     "Butaca",
                     butaca.Id,
                     $"{{\"razon\": \"Conflicto de concurrencia\", " +
                     $"\"versionLeida\": {versionLeida}, " +
-                    $"\"usuarioId\": {request.UsuarioId}}}"
+                    $"\"usuarioId\": {sesion.UsuarioId}}}"
                 );
 
                 return (false, "CONCURRENCY_ERROR", null);
@@ -77,7 +84,7 @@ namespace Ticketing.Services
             catch (Exception ex)
             {
                 await _auditService.LogAsync(
-                    request.UsuarioId,
+                    sesion.UsuarioId,
                     "RESERVE_FAILED_UNEXPECTED",
                     "Butaca",
                     butaca.Id,
@@ -146,15 +153,16 @@ namespace Ticketing.Services
         {
             var now = DateTime.UtcNow;
             return await _context.Reservas
+                .Include(r => r.Sesion)
                 .Include(r => r.Butaca)
                     .ThenInclude(b => b!.Sector)
-                    .ThenInclude(s => s!.Evento)          // ← navigamos hasta Evento
-                .Where(r => r.UsuarioId == usuarioId && r.Estado == "Pending" && r.Expiracion > now)
+                    .ThenInclude(s => s!.Evento)
+                .Where(r => r.UsuarioId == usuarioId && r.Estado == "Pending" && r.Sesion.Estado == "Activa" && r.Sesion.ExpiracionGlobal > now)
                 .Select(r => new
                 {
                     reservaId = r.Id,
-                    expiracion = r.Expiracion,
-                    eventoNombre = r.Butaca!.Sector.Evento.Nombre,  // ← nombre del evento para el front
+                    expiracion = r.Sesion.ExpiracionGlobal, // Expiración global desde la sesión
+                    eventoNombre = r.Butaca!.Sector.Evento.Nombre,
                     butaca = new
                     {
                         butacaId = r.Butaca.Id,

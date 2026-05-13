@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Ticketing.Data;
@@ -11,9 +12,11 @@ using Ticketing.Data;
 namespace ProyectodeSoftware_Ticketing.Migrations
 {
     [DbContext(typeof(SistemaTicketingContext))]
-    partial class SistemaTicketingContextModelSnapshot : ModelSnapshot
+    [Migration("20260513010509_sessionreserva")]
+    partial class sessionreserva
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

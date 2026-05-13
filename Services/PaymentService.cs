@@ -23,6 +23,7 @@ namespace Ticketing.Services
             // Traemos la reserva junto con la butaca en una sola query para no hacer dos roundtrips a la DB
             var reserva = await _context.Reservas
                 .Include(r => r.Butaca)
+                .Include(r => r.Sesion)
                 .FirstOrDefaultAsync(r => r.Id == request.ReservaId);
 
             // Validaciones previas a la transacción
@@ -37,7 +38,7 @@ namespace Ticketing.Services
 
             // Verificamos que la reserva no haya expirado. Aunque el Background Job limpia las expiradas, puede haber
             // un margen donde el job aún no corrió pero ya venció el tiempo.
-            if (DateTime.UtcNow > reserva.Expiracion)
+            if (DateTime.UtcNow > reserva.Sesion.ExpiracionGlobal)
                 return (false, "La reserva ha expirado. El asiento fue liberado.");
 
             
