@@ -235,7 +235,6 @@ body {
     font-family: inherit;
     font-weight: 600;
     transition: all 0.2s;
-    margin-bottom: 2rem;
 }
 
 .btn-secondary:hover {
@@ -254,7 +253,12 @@ body {
     font-family: inherit;
     font-weight: 600;
     transition: all 0.2s;
+}
+
+.seat-map-actions {
     margin-bottom: 2rem;
+    display: flex;
+    gap: 1rem;
 }
 
 .btn-secondaryb:hover {
@@ -885,7 +889,18 @@ body {
 .auth-form input:focus {
     outline: none;
     border-color: #4CAF50;
-    /* Borde verde al escribir */
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.payment-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+.payment-row input {
+    flex: 1;
+    min-width: 0; /* Prevents overflow in flex children */
 }
 
 .auth-form .submit-btn {
