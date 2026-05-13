@@ -8,14 +8,32 @@ namespace Ticketing.Services
 {
     public class AuditService : IAuditService
     {
+        private readonly SistemaTicketingContext _context;
         private readonly IServiceScopeFactory _scopeFactory;
 
-        public AuditService(IServiceScopeFactory scopeFactory)
+        public AuditService(SistemaTicketingContext context, IServiceScopeFactory scopeFactory)
         {
+            _context = context;
             _scopeFactory = scopeFactory;
         }
 
         public async Task LogAsync(int? usuarioId, string accion, string recursoAfectado, int recursoId, string detalle)
+        {
+            var auditoria = new Auditoria
+            {
+                UsuarioId = usuarioId,
+                Accion = accion,
+                RecursoAfectado = recursoAfectado,
+                RecursoId = recursoId,
+                FechaHora = DateTime.UtcNow,
+                Detalle = detalle
+            };
+
+            _context.Auditorias.Add(auditoria);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task LogIndependentAsync(int? usuarioId, string accion, string recursoAfectado, int recursoId, string detalle)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
