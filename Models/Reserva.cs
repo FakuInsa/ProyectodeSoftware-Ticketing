@@ -11,10 +11,12 @@ namespace Ticketing.Models
         public Butaca? Butaca { get; set; }
 
         public DateTime FechaCreacion { get; set; }
-        public DateTime Expiracion { get; set; }
 
         public int UsuarioId { get; set; }
         public virtual Usuario Usuario { get; set; } = null!;
+
+        public int SesionId { get; set; }
+        public virtual SesionReserva Sesion { get; set; } = null!;
 
         // Estado de la reserva ('Pending', 'Paid', 'Expired')
         public string Estado { get; set; } = "Pending";

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Ticketing.Data;
@@ -11,9 +12,11 @@ using Ticketing.Data;
 namespace ProyectodeSoftware_Ticketing.Migrations
 {
     [DbContext(typeof(SistemaTicketingContext))]
-    partial class SistemaTicketingContextModelSnapshot : ModelSnapshot
+    [Migration("20260511225026_Auth")]
+    partial class Auth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,11 +141,11 @@ namespace ProyectodeSoftware_Ticketing.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("FechaCreacion")
+                    b.Property<DateTime>("Expiracion")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("SesionId")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UsuarioId")
                         .HasColumnType("integer");
@@ -150,8 +153,6 @@ namespace ProyectodeSoftware_Ticketing.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ButacaId");
-
-                    b.HasIndex("SesionId");
 
                     b.HasIndex("UsuarioId");
 
@@ -184,39 +185,6 @@ namespace ProyectodeSoftware_Ticketing.Migrations
                     b.HasIndex("EventoId");
 
                     b.ToTable("Sectores");
-                });
-
-            modelBuilder.Entity("Ticketing.Models.SesionReserva", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("EventoId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("ExpiracionGlobal")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("LimiteElegido")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventoId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("SesionesReserva");
                 });
 
             modelBuilder.Entity("Ticketing.Models.Usuario", b =>
@@ -277,12 +245,6 @@ namespace ProyectodeSoftware_Ticketing.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Ticketing.Models.SesionReserva", "Sesion")
-                        .WithMany("Reservas")
-                        .HasForeignKey("SesionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Ticketing.Models.Usuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId")
@@ -290,8 +252,6 @@ namespace ProyectodeSoftware_Ticketing.Migrations
                         .IsRequired();
 
                     b.Navigation("Butaca");
-
-                    b.Navigation("Sesion");
 
                     b.Navigation("Usuario");
                 });
@@ -305,30 +265,6 @@ namespace ProyectodeSoftware_Ticketing.Migrations
                         .IsRequired();
 
                     b.Navigation("Evento");
-                });
-
-            modelBuilder.Entity("Ticketing.Models.SesionReserva", b =>
-                {
-                    b.HasOne("Ticketing.Models.Evento", "Evento")
-                        .WithMany()
-                        .HasForeignKey("EventoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Ticketing.Models.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Evento");
-
-                    b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("Ticketing.Models.SesionReserva", b =>
-                {
-                    b.Navigation("Reservas");
                 });
 #pragma warning restore 612, 618
         }
