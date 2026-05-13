@@ -32,7 +32,7 @@ namespace Ticketing.Services
             if (sesion == null || sesion.Estado != "Activa" || sesion.ExpiracionGlobal <= DateTime.UtcNow)
                 return (false, "Sesión no válida o expirada.", null);
 
-            if (sesion.Reservas.Count >= sesion.LimiteElegido)
+            if (sesion.Reservas.Count(r => r.Estado == "Pending") >= sesion.LimiteElegido)
                 return (false, "Límite de entradas excedido.", null);
 
             var butaca = await _context.Butacas.FirstOrDefaultAsync(b => b.Id == request.ButacaId);
