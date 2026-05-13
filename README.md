@@ -53,12 +53,34 @@ Username: postgres
 
 Password: admin
 
+### Ingreso al sistema(Frontend)
+**Credenciales de usuario de prueba (Test):**
 
+Mail de test:
+test@example.com
+
+Contraseña de test:
+test123
+
+## Tecnologías Utilizadas
+
+- **Backend:** .NET 9 (ASP.NET Core Web API)
+- **Base de Datos:** PostgreSQL
+- **ORM:** Entity Framework Core 9
+- **Tiempo Real:** SignalR (WebSockets)
+- **Frontend:** Vanilla JS, HTML5, CSS3 Nativo
+- **Infraestructura:** Docker & Docker Compose
+
+## Características Principales
+
+**Selección en Tiempo Real:** Las butacas seleccionadas por un usuario se bloquean instantáneamente para el resto de los clientes conectados gracias a SignalR.
+**Expiración Automática de Reservas:** Un `BackgroundService` (.NET Hosted Service) verifica constantemente el tiempo de las sesiones y libera de forma automática las butacas si no se concreta el pago tras 5 minutos.
+**Manejo de Concurrencia:** Implementación de concurrencia optimista mediante `Tokens de Concurrencia` (Row Versioning) en PostgreSQL para evitar reservas duplicadas en el mismo milisegundo (overbooking).
+**Auditoría Transaccional Robusta:** Sistema de registro inmutable. Cada intento de pago o reserva guarda automáticamente auditorías tanto en el éxito (vinculadas a la transacción principal) como en el fracaso (mediante scopes independientes para sobrevivir al rollback).
+**Autenticación Local Segura:** Sistema de usuarios con encriptación de contraseñas mediante BCrypt.
 
 ## Notas de Arquitectura
 
-Persistencia: Los datos de la base de datos persisten entre reinicios gracias a los volúmenes de Docker.
-
-Migraciones Automáticas: Al iniciar, la API ejecuta automáticamente las migraciones de Entity Framework Core y realiza el Seeding de datos.
-
-Seguridad: El sistema implementa manejo de concurrencia optimista para evitar reservas duplicadas en el mismo milisegundo.
+- **Persistencia:** Los datos de la base de datos persisten entre reinicios gracias a los volúmenes de Docker.
+- **Migraciones Automáticas:** Al iniciar, la API ejecuta automáticamente las migraciones de Entity Framework Core y realiza el *Seeding* de datos inicial (Eventos, Sectores, Butacas y el usuario de prueba).
+- **Integridad ACID:** El flujo de compra (reserva -> confirmación de pago) se maneja con transacciones explícitas de base de datos (`BeginTransactionAsync`), asegurando que la confirmación de la venta y el cambio de estado de la butaca jamás queden inconsistentes.
