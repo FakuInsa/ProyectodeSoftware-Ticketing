@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Ticketing.Data;
 using Ticketing.Models;
 using Ticketing.DTOs;
+using Microsoft.AspNetCore.SignalR;
+using Ticketing.Hubs;
 
 namespace Ticketing.Controllers
 {
@@ -14,11 +16,12 @@ namespace Ticketing.Controllers
     public class SessionsController : ControllerBase
     {
         private readonly SistemaTicketingContext _context;
+        private readonly IHubContext<TicketingHub> _hubContext;
 
-        // Constructor limpio, sin la inyección de IHubContext
-        public SessionsController(SistemaTicketingContext context)
+        public SessionsController(SistemaTicketingContext context, IHubContext<TicketingHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -81,7 +84,7 @@ namespace Ticketing.Controllers
             {
                 sesionId = sesionActiva.Id,
                 eventoId = sesionActiva.EventoId,
-                eventoNombre = sesionActiva.Evento.Nombre,
+                eventoNombre = sesionActiva.Evento?.Nombre,
                 expiracionGlobal = sesionActiva.ExpiracionGlobal,
                 reservas = sesionActiva.Reservas.Where(r => r.Estado == "Pending").Select(r => new
                 {
@@ -89,7 +92,7 @@ namespace Ticketing.Controllers
                     butaca = new
                     {
                         butacaId = r.ButacaId,
-                        sectorNombre = r.Butaca.Sector?.Nombre,
+                        sectorNombre = r.Butaca?.Sector?.Nombre,
                         fila = r.Butaca?.Fila,
                         numeroAsiento = r.Butaca?.NumeroAsiento
                     }
@@ -123,8 +126,10 @@ namespace Ticketing.Controllers
                 }
             }
 
-            // Aquí solo guardamos cambios, sin notificar al Hub
             await _context.SaveChangesAsync();
+            
+            await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
+
             return Ok();
         }
     }

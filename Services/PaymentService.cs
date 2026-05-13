@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Ticketing.Data;
 using Ticketing.DTOs;
 using Ticketing.Models;
+using Microsoft.AspNetCore.SignalR;
+using Ticketing.Hubs;
 
 namespace Ticketing.Services
 {
@@ -11,11 +13,13 @@ namespace Ticketing.Services
     {
         private readonly SistemaTicketingContext _context;
         private readonly IAuditService _auditService;
+        private readonly IHubContext<TicketingHub> _hubContext;
 
-        public PaymentService(SistemaTicketingContext context, IAuditService auditService)
+        public PaymentService(SistemaTicketingContext context, IAuditService auditService, IHubContext<TicketingHub> hubContext)
         {
             _context = context;
             _auditService = auditService;
+            _hubContext = hubContext;
         }
 
         public async Task<(bool Success, string Message)> ConfirmPaymentAsync(ConfirmPaymentRequest request)
@@ -36,10 +40,9 @@ namespace Ticketing.Services
             if (reserva.Estado != "Pending")
                 return (false, $"La reserva ya fue procesada. Estado actual: {reserva.Estado}.");
 
-            // Verificamos que la reserva no haya expirado. Aunque el Background Job limpia las expiradas, puede haber
-            // un margen donde el job aún no corrió pero ya venció el tiempo.
+            // Verificamos que la reserva no haya expirado mediante su Sesión.
             if (DateTime.UtcNow > reserva.Sesion.ExpiracionGlobal)
-                return (false, "La reserva ha expirado. El asiento fue liberado.");
+                return (false, "La sesión ha expirado. El asiento fue liberado.");
 
             
             // TRANSACCIÓN ACID
@@ -74,6 +77,8 @@ namespace Ticketing.Services
 
                 // Confirmamos la transacción — recién acá los cambios se vuelven visibles para el resto del sistema
                 await transaction.CommitAsync();
+
+                await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
 
                 return (true, "Pago confirmado exitosamente.");
             }

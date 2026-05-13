@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using Ticketing.Data;
 using Ticketing.Models;
 using Ticketing.Services;
+using Microsoft.AspNetCore.SignalR;
+using Ticketing.Hubs;
 
 namespace Ticketing.Jobs
 {
@@ -22,10 +24,13 @@ namespace Ticketing.Jobs
         // Cada cuánto corre el job. 60 segundos es razonable, las reservas vencen a los 5 minutos, así que el peor caso
         // es que una butaca tarde 6 minutos en liberarse — aceptable.
         private readonly TimeSpan _interval = TimeSpan.FromSeconds(30);
-        public ReservationExpirationJob(IServiceScopeFactory scopeFactory, ILogger<ReservationExpirationJob> logger)
+        private readonly IHubContext<TicketingHub> _hubContext;
+
+        public ReservationExpirationJob(IServiceScopeFactory scopeFactory, ILogger<ReservationExpirationJob> logger, IHubContext<TicketingHub> hubContext)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _hubContext = hubContext;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -65,10 +70,7 @@ namespace Ticketing.Jobs
 
             var ahora = DateTime.UtcNow;
 
-            // Buscamos todas las reservas que cumplan las 3 condiciones:
-            // 1. Estado "Pending" 
-            // 2. Expiracion < ahora — superaron los 5 minutos
-            // 3. Incluimos la Butaca para poder cambiar su estado en la misma query
+            // Plan B: Buscamos Sesiones globales que hayan vencido
             var sesionesVencidas = await context.SesionesReserva
                 .Include(s => s.Reservas)
                     .ThenInclude(r => r.Butaca)
@@ -121,11 +123,13 @@ namespace Ticketing.Jobs
                     await transaction.CommitAsync();
 
                     _logger.LogInformation("[Job] Sesion {SesionId} expirada y {Cantidad} butacas liberadas.", sesion.Id, sesion.Reservas.Count);
+                    
+                    // Notificar a todos los clientes en tiempo real
+                    await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-
                     _logger.LogError(ex, "[Job] Error liberando sesión {SesionId}.", sesion.Id);
                 }
             }

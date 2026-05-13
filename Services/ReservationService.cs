@@ -5,6 +5,8 @@ using Ticketing.Data;
 using Ticketing.DTOs;
 using Ticketing.Models;
 using System.Linq;
+using Microsoft.AspNetCore.SignalR;
+using Ticketing.Hubs;
 
 namespace Ticketing.Services
 {
@@ -12,19 +14,26 @@ namespace Ticketing.Services
     {
         private readonly SistemaTicketingContext _context;
         private readonly IAuditService _auditService;
+        private readonly IHubContext<TicketingHub> _hubContext;
 
-        public ReservationService(SistemaTicketingContext context, IAuditService auditService)
+        public ReservationService(SistemaTicketingContext context, IAuditService auditService, IHubContext<TicketingHub> hubContext)
         {
             _context = context;
             _auditService = auditService;
+            _hubContext = hubContext;
         }
 
         public async Task<(bool Success, string Message, Reserva? Reserva)> CreateReservationAsync(CreateReservationRequest request)
         {
-            var sesion = await _context.SesionesReserva.Include(s => s.Reservas).FirstOrDefaultAsync(s => s.Id == request.SesionId);
+            var sesion = await _context.SesionesReserva
+                .Include(s => s.Reservas)
+                .FirstOrDefaultAsync(s => s.Id == request.SesionId);
 
-            if (sesion == null || sesion.Estado != "Activa" || sesion.ExpiracionGlobal <= DateTime.UtcNow) return (false, "Sesión no válida o expirada.", null);
-            if (sesion.Reservas.Count >= sesion.LimiteElegido) return (false, "Límite de entradas excedido.", null);
+            if (sesion == null || sesion.Estado != "Activa" || sesion.ExpiracionGlobal <= DateTime.UtcNow)
+                return (false, "Sesión no válida o expirada.", null);
+
+            if (sesion.Reservas.Count(r => r.Estado == "Pending") >= sesion.LimiteElegido)
+                return (false, "Límite de entradas excedido.", null);
 
             var butaca = await _context.Butacas.FirstOrDefaultAsync(b => b.Id == request.ButacaId);
 
@@ -62,7 +71,7 @@ namespace Ticketing.Services
                     $"\"versionLeida\": {versionLeida}}}"
                 );
 
-                
+                await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
 
                 return (true, "Reserva exitosa.", reserva);
             }
@@ -136,6 +145,8 @@ namespace Ticketing.Services
                     reserva.Id,
                     $"{{\"mensaje\": \"Reserva {reserva.Id} cancelada por el usuario\"}}"
                 );
+
+                await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
 
                 return (true, "Reserva cancelada exitosamente.");
             }
