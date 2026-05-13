@@ -283,16 +283,40 @@ body {
 }
 
 /* Colores de la leyenda */
+.legend-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 5px;
+}
+
 .legend-dot.available {
-    color: var(--seat-available);
+    background-color: var(--seat-available);
 }
 
 .legend-dot.reserved {
-    color: var(--seat-reserved);
+    background-color: var(--seat-reserved);
 }
 
 .legend-dot.sold {
-    color: var(--seat-sold);
+    background-color: var(--seat-sold);
+}
+
+.seat-map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+@media (max-width: 480px) {
+    .seat-map-header {
+        justify-content: center;
+        text-align: center;
+    }
 }
 
 /* Layout de los Sectores y Filas */
@@ -399,14 +423,24 @@ body {
    MEDIA QUERIES (Responsividad para Móviles)
    ========================================= */
 @media (max-width: 768px) {
-
     /* Reducir paddings generales */
     .container {
         padding: 1rem;
     }
 
-    header {
+    .main-header {
         padding: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .header-actions {
+        gap: 1rem;
+    }
+
+    .logo {
+        font-size: 1.4rem;
     }
 
     /* Reducir tamaños de fuente */
@@ -415,10 +449,15 @@ body {
         margin-bottom: 1.5rem;
     }
 
-    /* Ajustar la grilla de eventos para que quepa en pantallas chicas */
+    #event-title {
+        font-size: 1.3rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Ajustar la grilla de eventos */
     .events-grid {
         grid-template-columns: 1fr;
-        /* Una sola columna en móviles */
         gap: 1rem;
     }
 
@@ -434,10 +473,20 @@ body {
         gap: 1rem;
     }
 
-    /* Ajustar los asientos en caso de pantallas muy estrechas */
-    .seat-grid {
-        padding: 1rem;
-        gap: 5px;
+    .btn-secondary, .btn-secondaryb {
+        padding: 0.75rem 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Mapa de asientos: scroll horizontal si es muy ancho */
+    #seat-grid-container {
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .seat-row {
+        min-width: max-content; /* Evita que se colapsen las filas */
     }
 
     .seat {
@@ -448,14 +497,26 @@ body {
 
     .sector-container {
         padding: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .toast {
         right: 1rem;
         bottom: 1rem;
         left: 1rem;
-        /* Para que ocupe todo el ancho en móvil si es necesario */
         text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .cart-toggle-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-logout {
+        padding: 5px 8px;
+        font-size: 0.8rem;
     }
 }
 
@@ -740,11 +801,19 @@ body {
     background: #111111;
     padding: 2.5rem;
     border-radius: 12px;
-    width: 90%;
+    width: 95%;
     max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
     position: relative;
     border: 1px solid #333;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 1.5rem;
+    }
 }
 
 /* Botón de cerrar la X */
@@ -834,4 +903,151 @@ body {
 
 .auth-form .submit-btn:hover {
     background: #45a049;
+}
+
+/* =========================================
+   CLASES UTILITARIAS (REFACTOR SoC)
+   ========================================= */
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.user-name {
+    font-weight: 600;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.user-dropdown:hover .user-name {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #1a1a1a;
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    z-index: 1000;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    padding: 10px;
+    margin-top: 5px;
+}
+
+.user-dropdown:hover .dropdown-content {
+    display: block;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.btn-logout {
+    width: 100%;
+    padding: 8px 12px;
+    background: #f034277c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.btn-logout:hover {
+    background: var(--seat-sold);
+}
+
+.qty-modal-content {
+    max-width: 300px;
+    text-align: center;
+}
+
+.modal-title {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #fff;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+@media (max-width: 480px) {
+    .modal-title {
+        font-size: 1.25rem;
+    }
+}
+
+.modal-subtitle {
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.qty-input {
+    text-align: center;
+    font-size: 1.2rem;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+    background: #222;
+    color: #fff;
+}
+
+.global-timer-container {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.global-timer-text {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: var(--seat-available);
+}
+
+.global-timer-text.expired {
+    color: var(--seat-sold);
+}
+
+/* Estilos específicos para campos de pago */
+#payment-form input {
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+#card-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.payment-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.payment-row input {
+    flex: 1;
+    font-size: 0.9rem !important;
+    padding: 10px 5px !important;
+}
+
+@media (max-width: 480px) {
+    .payment-row {
+        gap: 5px;
+    }
+    .payment-row input {
+        font-size: 0.8rem !important;
+    }
 }
