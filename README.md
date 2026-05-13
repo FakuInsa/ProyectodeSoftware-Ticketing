@@ -60,7 +60,7 @@ Mail de test:
 test@example.com
 
 Contraseña de test:
-test123
+test1234
 
 ## Tecnologías Utilizadas
 
