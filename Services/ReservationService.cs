@@ -78,7 +78,7 @@ namespace Ticketing.Services
             catch (DbUpdateConcurrencyException)
             {
                 // Registrar auditoría fallida por concurrencia
-                await _auditService.LogAsync(
+                await _auditService.LogIndependentAsync(
                     sesion.UsuarioId,
                     "RESERVATION_FAILED_CONCURRENCY",
                     "Butaca",
@@ -92,7 +92,7 @@ namespace Ticketing.Services
             }
             catch (Exception ex)
             {
-                await _auditService.LogAsync(
+                await _auditService.LogIndependentAsync(
                     sesion.UsuarioId,
                     "RESERVE_FAILED_UNEXPECTED",
                     "Butaca",

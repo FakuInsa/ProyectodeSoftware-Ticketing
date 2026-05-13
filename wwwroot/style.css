@@ -1,26 +1,20 @@
+/* =========================================
+   VARIABLES Y BASE
+   ========================================= */
 :root {
     --bg-color: #0d0f12;
     --text-primary: #ffffff;
     --text-secondary: #9ca3af;
     --accent-color: #6366f1;
+    --accent-dark: #4f46e5;
 
     --seat-available: #22c55e;
+    --seat-avail-dark: #16a34a;
     --seat-reserved: #eab308;
     --seat-sold: #ef4444;
 
     --card-bg: rgba(255, 255, 255, 0.05);
-    --card-bg-b: rgba(77, 14, 14, 0.87);
-    --card-bg-b2: rgba(165, 23, 23, 0.76);
     --card-border: rgba(255, 255, 255, 0.1);
-
-    --accent-dark: #4f46e5;
-    /* hover del botón carrito */
-    --seat-avail-dark: #16a34a;
-    /* hover del botón pagar */
-
-    --drawer-width: 350px;
-    --seat-size: 32px;
-
 }
 
 * {
@@ -29,7 +23,13 @@
     padding: 0;
 }
 
+html,
 body {
+    overflow-x: hidden !important;
+    /* Previene scroll horizontal fantasma */
+    width: 100%;
+    max-width: 100%;
+    position: relative;
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-primary);
@@ -38,16 +38,13 @@ body {
     flex-direction: column;
 }
 
-/*header {
-    padding: 1.5rem 2rem;
-    background: rgba(13, 15, 18, 0.8);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--card-border);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}*/
+.hidden {
+    display: none !important;
+}
 
+/* =========================================
+   LAYOUT PRINCIPAL
+   ========================================= */
 .main-header {
     padding: 1.5rem 2rem;
     background: rgba(13, 15, 18, 0.8);
@@ -61,8 +58,24 @@ body {
     align-items: center;
 }
 
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+}
 
-/* Clases utilitarias y layout base */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+main.container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -77,12 +90,9 @@ body {
     text-align: center;
 }
 
-
-.hidden {
-    display: none !important;
-}
-
-/* grilla de eventos */
+/* =========================================
+   TARJETAS DE EVENTOS
+   ========================================= */
 .events-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -138,11 +148,41 @@ body {
     gap: 0.5rem;
 }
 
+.event-card.inactivo {
+    opacity: 0.6;
+    filter: grayscale(100%);
+    cursor: pointer;
+    position: relative;
+}
 
+.event-card.inactivo:hover {
+    transform: translateY(-5px);
+    opacity: 0.9;
+    filter: grayscale(80%);
+    border-color: rgba(239, 68, 68, 0.3);
+}
 
+.event-card.inactivo::before {
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
 
+/* =========================================
+   MAPA DE ASIENTOS
+   ========================================= */
+.seat-map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
 
-/* Seat Map */
+.seat-map-actions {
+    display: flex;
+    gap: 1rem;
+}
+
 .seat-legend {
     display: flex;
     justify-content: center;
@@ -156,6 +196,56 @@ body {
     gap: 0.5rem;
     font-size: 0.9rem;
     color: var(--text-secondary);
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 5px;
+}
+
+.legend-dot.available {
+    background-color: var(--seat-available);
+}
+
+.legend-dot.reserved {
+    background-color: var(--seat-reserved);
+}
+
+.legend-dot.sold {
+    background-color: var(--seat-sold);
+}
+
+.sector-container {
+    margin-bottom: 2.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.sector-title {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.seat-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-label {
+    width: 25px;
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-right: 10px;
 }
 
 .seat {
@@ -201,31 +291,24 @@ body {
     cursor: not-allowed;
 }
 
-/* Tooltip for seat */
-.seat::after {
-    content: attr(data-info);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-5px);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-    opacity: 0;
+.seat.processing {
     pointer-events: none;
-    transition: opacity 0.2s;
-    z-index: 10;
+    opacity: 0.5;
+    animation: pulse 1s infinite alternate;
 }
 
-.seat:hover::after {
-    opacity: 1;
+.loading-msg {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
-/* botones */
-.btn-secondary {
+/* =========================================
+   BOTONES
+   ========================================= */
+.btn-secondary,
+.btn-secondaryb {
     background: transparent;
     border: 1px solid var(--card-border);
     color: var(--text-primary);
@@ -241,330 +324,15 @@ body {
     background: var(--card-bg);
 }
 
-/* Botón con color de alerta */
 .btn-secondaryb {
     background: rgba(239, 68, 68, 0.2);
-    /* Fondo rojizo */
-    border: 1px solid var(--seat-sold);
+    border-color: var(--seat-sold);
     color: var(--seat-sold);
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.seat-map-actions {
-    margin-bottom: 2rem;
-    display: flex;
-    gap: 1rem;
 }
 
 .btn-secondaryb:hover {
     background: var(--seat-sold);
     color: white;
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-
-.logo {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--accent-color);
-}
-
-/* Colores de la leyenda */
-.legend-dot {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    margin-right: 5px;
-}
-
-.legend-dot.available {
-    background-color: var(--seat-available);
-}
-
-.legend-dot.reserved {
-    background-color: var(--seat-reserved);
-}
-
-.legend-dot.sold {
-    background-color: var(--seat-sold);
-}
-
-.seat-map-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-@media (max-width: 480px) {
-    .seat-map-header {
-        justify-content: center;
-        text-align: center;
-    }
-}
-
-/* Layout de los Sectores y Filas */
-.sector-container {
-    margin-bottom: 2.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid var(--card-border);
-}
-
-.sector-title {
-    color: var(--text-secondary);
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-.seat-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    align-items: center;
-    justify-content: center;
-}
-
-/* La letra identificadora de la fila (A, B, C...) */
-.row-label {
-    width: 25px;
-    font-weight: bold;
-    color: var(--text-secondary);
-    text-align: right;
-    margin-right: 10px;
-}
-
-/* Mensajes genéricos */
-.loading-msg {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-/* =========================================
-   TOAST NOTIFICATIONS
-   ========================================= */
-
-/* Estado base del Toast (Oculto pero listo para saltar) */
-.toast {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    /* Ubicación en la esquina inferior izquierda */
-    right: auto;
-    width: max-content;
-    max-width: 400px;
-    background-color: #1a1a1a;
-    color: #fff;
-    padding: 15px 25px;
-    border-radius: 8px;
-    font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-    z-index: 10000;
-
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-}
-
-/* Estado visible (Cuando JS le agrega la clase 'show') */
-.toast.show {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Toast Notification Tipos (Respetando tus variables) */
-.toast.success {
-    border-left: 5px solid var(--seat-available);
-}
-
-.toast.error {
-    border-left: 5px solid var(--seat-sold);
-}
-
-/* Estado procesando del asiento */
-.seat.processing {
-    pointer-events: none;
-    opacity: 0.5;
-    animation: pulse 1s infinite alternate;
-}
-
-@keyframes pulse {
-    from {
-        transform: scale(1);
-    }
-
-    to {
-        transform: scale(0.9);
-    }
-}
-
-/* =========================================
-   MEDIA QUERIES (Responsividad para Móviles)
-   ========================================= */
-@media (max-width: 768px) {
-    /* Reducir paddings generales */
-    .container {
-        padding: 1rem;
-    }
-
-    .main-header {
-        padding: 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-        justify-content: center;
-    }
-
-    .header-actions {
-        gap: 1rem;
-    }
-
-    .logo {
-        font-size: 1.4rem;
-    }
-
-    /* Reducir tamaños de fuente */
-    .section-title {
-        font-size: 1.8rem;
-        margin-bottom: 1.5rem;
-    }
-
-    #event-title {
-        font-size: 1.3rem;
-        margin-top: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Ajustar la grilla de eventos */
-    .events-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .event-card {
-        padding: 1.5rem;
-    }
-
-    /* Ajustar la leyenda de asientos */
-    .seat-legend {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
-    }
-
-    .btn-secondary, .btn-secondaryb {
-        padding: 0.75rem 1.2rem;
-        margin-bottom: 1rem;
-    }
-
-    /* Mapa de asientos: scroll horizontal si es muy ancho */
-    #seat-grid-container {
-        overflow-x: auto;
-        padding-bottom: 1rem;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .seat-row {
-        min-width: max-content; /* Evita que se colapsen las filas */
-    }
-
-    .seat {
-        width: 28px;
-        height: 28px;
-        font-size: 0.6rem;
-    }
-
-    .sector-container {
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .toast {
-        right: 1rem;
-        bottom: 1rem;
-        left: 1rem;
-        text-align: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .cart-toggle-btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-    }
-
-    .btn-logout {
-        padding: 5px 8px;
-        font-size: 0.8rem;
-    }
-}
-
-/* =========================================
-   ESTILOS PARA EVENTOS INACTIVOS (MODIFICADO)
-   ========================================= */
-
-.event-card.inactivo {
-    opacity: 0.6;
-    /* Un poco menos transparente para que se lea mejor si vas a entrar */
-    filter: grayscale(100%);
-    cursor: pointer;
-    /* AHORA TE DEJA HACER CLIC */
-    position: relative;
-}
-
-/* Efecto Hover para tarjetas inactivas */
-.event-card.inactivo:hover {
-    transform: translateY(-5px);
-    /* Recupera el movimiento */
-    opacity: 0.9;
-    filter: grayscale(80%);
-    /* Recupera un pelín de color al pasar el mouse */
-    border-color: rgba(239, 68, 68, 0.3);
-    /* Borde con un toque rojo suave */
-}
-
-/* LA LÍNEA ROJA: Reemplaza el violeta por rojo solo para inactivos */
-.event-card.inactivo::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ef4444, #b91c1c);
-    /* DEGRADADO ROJO */
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.event-card.inactivo:hover::before {
-    opacity: 1;
-    /* Se muestra al pasar el mouse */
 }
 
 /* =========================================
@@ -586,6 +354,11 @@ body {
     gap: 0.5rem;
 }
 
+.cart-toggle-btn:hover {
+    transform: scale(1.05);
+    background: var(--accent-dark);
+}
+
 #cart-count {
     background: white;
     color: var(--accent-color);
@@ -595,11 +368,6 @@ body {
     font-weight: bold;
 }
 
-.cart-toggle-btn:hover {
-    transform: scale(1.05);
-    background: var(--accent-dark);
-}
-
 .cart-drawer {
     position: fixed;
     top: 0;
@@ -607,7 +375,6 @@ body {
     width: 100%;
     max-width: 400px;
     height: 100dvh;
-    /* dvh soluciona el bug de altura */
     background: rgba(13, 15, 18, 0.95);
     backdrop-filter: blur(15px);
     border-left: 1px solid var(--card-border);
@@ -617,6 +384,7 @@ body {
     z-index: 200;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 }
 
 .cart-drawer.open {
@@ -629,11 +397,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.cart-header h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
 }
 
 .close-cart-btn {
@@ -658,6 +421,20 @@ body {
     gap: 1rem;
 }
 
+.cart-section-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.cart-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
 .cart-item {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -665,38 +442,15 @@ body {
     padding: 1rem;
     display: flex;
     flex-wrap: wrap;
-    /* Permite que los elementos bajen de línea si no hay espacio */
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    /* Espaciado interno si se envuelven */
     transition: border-color 0.2s;
 }
 
 .cart-item-info {
     flex: 1;
     min-width: 150px;
-    /* Evita que el texto se comprima demasiado */
-}
-
-.cart-item-timer {
-    font-family: monospace;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--seat-available);
-    background: rgba(34, 197, 94, 0.1);
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
-}
-
-.cart-item-timer.expired {
-    color: var(--seat-sold);
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.cart-item.item-expired {
-    opacity: 0.6;
-    border-color: rgba(239, 68, 68, 0.3);
 }
 
 .cart-item-actions {
@@ -748,42 +502,9 @@ body {
     transform: scale(1.02);
 }
 
-@media (max-width: 768px) {
-    .cart-drawer {
-        width: 100%;
-    }
-}
-
 /* =========================================
-   REFACTORIZADO
+   MODALES (AUTH, PAGO, CANTIDAD)
    ========================================= */
-
-
-.cart-section-label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-}
-
-.cart-items-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-/* =========================================
-   MODAL DE AUTENTICACIÓN (POP-UP)
-   ========================================= */
-
-/* Bloquea toda la pantalla con fondo oscuro y desenfocado */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -793,14 +514,11 @@ body {
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(4px);
     z-index: 9999;
-
-    /* Centrado absoluto */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* La caja principal del formulario */
 .modal-content {
     background: #111111;
     padding: 2.5rem;
@@ -814,13 +532,6 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
-@media (max-width: 480px) {
-    .modal-content {
-        padding: 1.5rem;
-    }
-}
-
-/* Botón de cerrar la X */
 .close-btn {
     position: absolute;
     top: 15px;
@@ -835,10 +546,22 @@ body {
 
 .close-btn:hover {
     color: #ef4444;
-    /* Rojo al pasar el mouse */
 }
 
-/* Pestañas (Ingresar / Registrarse) */
+.modal-title {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #fff;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.modal-subtitle {
+    color: #888;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 .modal-tabs {
     display: flex;
     gap: 15px;
@@ -865,10 +588,8 @@ body {
 .tab-btn.active {
     color: white;
     border-bottom: 2px solid #4CAF50;
-    /* Línea verde debajo de la activa */
 }
 
-/* Formulario por dentro */
 .auth-form {
     display: flex;
     flex-direction: column;
@@ -892,17 +613,6 @@ body {
     box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
-.payment-row {
-    display: flex;
-    gap: 15px;
-    width: 100%;
-}
-
-.payment-row input {
-    flex: 1;
-    min-width: 0; /* Prevents overflow in flex children */
-}
-
 .auth-form .submit-btn {
     background: #4CAF50;
     color: white;
@@ -920,8 +630,66 @@ body {
     background: #45a049;
 }
 
+/* Modales Específicos */
+.qty-modal-content {
+    max-width: 300px;
+}
+
+.qty-input {
+    text-align: center;
+    font-size: 1.2rem;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+    background: #222;
+    color: #fff;
+}
+
+modal-content {
+    scrollbar-width: none;
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none;
+}
+
+#payment-form input {
+    text-align: center;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+}
+
+#card-number {
+    width: 100%;
+}
+
+.payment-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.payment-row input {
+    padding: 12px 15px !important;
+    font-size: 1rem !important;
+    height: auto;
+}
+
+
+#card-expiry {
+    width: calc(65% - 5px);
+}
+
+#card-cvv {
+    width: calc(35% - 5px);
+}
+
+
+
 /* =========================================
-   CLASES UTILITARIAS (REFACTOR SoC)
+   USUARIO LOGUEADO Y TIMER GLOBAL
    ========================================= */
 .user-dropdown {
     position: relative;
@@ -948,7 +716,7 @@ body {
     right: 0;
     background: #1a1a1a;
     min-width: 160px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     z-index: 1000;
     border-radius: 8px;
     border: 1px solid var(--card-border);
@@ -978,42 +746,6 @@ body {
     background: var(--seat-sold);
 }
 
-.qty-modal-content {
-    max-width: 300px;
-    text-align: center;
-}
-
-.modal-title {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: #fff;
-    text-align: center;
-    font-size: 1.5rem;
-}
-
-@media (max-width: 480px) {
-    .modal-title {
-        font-size: 1.25rem;
-    }
-}
-
-.modal-subtitle {
-    color: #888;
-    margin-bottom: 20px;
-}
-
-.qty-input {
-    text-align: center;
-    font-size: 1.2rem;
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #333;
-    background: #222;
-    color: #fff;
-}
-
 .global-timer-container {
     background: rgba(0, 0, 0, 0.5);
     padding: 8px 15px;
@@ -1035,33 +767,208 @@ body {
     color: var(--seat-sold);
 }
 
-/* Estilos específicos para campos de pago */
-#payment-form input {
-    text-align: center;
-    letter-spacing: 1px;
-}
-
-#card-number {
-    font-size: 1.1rem;
+/* =========================================
+   TOAST NOTIFICATIONS
+   ========================================= */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: auto;
+    width: max-content;
+    max-width: 400px;
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
     font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
 }
 
-.payment-row {
-    display: flex;
-    gap: 10px;
-    width: 100%;
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
 }
 
-.payment-row input {
-    flex: 1;
-    font-size: 0.9rem !important;
-    padding: 10px 5px !important;
+.toast.success {
+    border-left: 5px solid var(--seat-available);
+}
+
+.toast.error {
+    border-left: 5px solid var(--seat-sold);
+}
+
+/* =========================================
+   ANIMACIONES CLAVE
+   ========================================= */
+@keyframes pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(0.9);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   MEDIA QUERIES (RESPONSIVE)
+   ========================================= */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .main-header {
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    #event-title {
+        font-size: 1.3rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .events-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .event-card {
+        padding: 1.5rem;
+    }
+
+    .seat-legend {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .btn-secondary,
+    .btn-secondaryb {
+        padding: 0.75rem 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .seat-map-header {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .seat-map-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    #seat-grid-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .sector-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+    }
+
+    .seat-row {
+        min-width: max-content;
+        justify-content: flex-start;
+        padding-right: 1.5rem;
+    }
+
+    .seat {
+        width: 30px;
+        height: 30px;
+        font-size: 0.65rem;
+    }
+
+    .toast {
+        left: 50%;
+        right: auto;
+        bottom: 20px;
+        transform: translate(-50%, 20px);
+        width: 90%;
+        max-width: 350px;
+        text-align: center;
+        z-index: 10000;
+    }
+
+    .toast.show {
+        transform: translate(-50%, 0);
+    }
+
+    .cart-drawer {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
+    .cart-toggle-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-logout {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+    }
+
+    .seat-map-header {
+        justify-content: center;
+        text-align: center;
+    }
+
     .payment-row {
         gap: 5px;
     }
+
     .payment-row input {
         font-size: 0.8rem !important;
     }

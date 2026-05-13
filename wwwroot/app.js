@@ -3,13 +3,11 @@ let currentEventId = null;
 let currentEventName = null;
 let currentUser = null;
 let pendingEventToLoad = null;
-
-// Plan B: Sesión Global
 let currentSessionId = null;
 let globalTimerInterval = null;
-
-// SignalR Connection
 let connection = null;
+let cartCount = 0;
+const seatRegistry = new Map();
 
 document.addEventListener('DOMContentLoaded', () => {
     initAuth();
@@ -17,45 +15,52 @@ document.addEventListener('DOMContentLoaded', () => {
     initSeatMapClickDelegation();
     initSignalR();
 
-    // Listeners UI
+    // Input Masks (DRY)
+    ['card-number', 'card-cvv'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.addEventListener('input', e => e.target.value = e.target.value.replace(/\D/g, ''));
+    });
+
+    const expiryInput = document.getElementById('card-expiry');
+    if (expiryInput) {
+        expiryInput.addEventListener('input', e => {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.length > 2) val = val.substring(0, 2) + '/' + val.substring(2, 4);
+            e.target.value = val;
+        });
+    }
+
+    // UI Listeners
     document.getElementById('back-btn').addEventListener('click', showEventsSection);
     document.getElementById('cancel-operation-btn').addEventListener('click', cancelOperation);
     document.getElementById('cart-toggle-btn').addEventListener('click', toggleCart);
     document.getElementById('close-cart-btn').addEventListener('click', closeCart);
-    document.getElementById('pay-all-btn').addEventListener('click', payAll);
+    document.getElementById('pay-all-btn').addEventListener('click', () => document.getElementById('payment-modal').classList.remove('hidden'));
     document.getElementById('btn-salir').addEventListener('click', logout);
-
-    // Listeners del Pop-up de Cantidad
     document.getElementById('close-qty-btn').addEventListener('click', () => document.getElementById('qty-modal').classList.add('hidden'));
     document.getElementById('confirm-qty-btn').addEventListener('click', startSession);
 
-    // Listeners Autenticación
+    // Auth Listeners
     document.getElementById('tab-login').addEventListener('click', () => switchAuthTab('login'));
     document.getElementById('tab-register').addEventListener('click', () => switchAuthTab('register'));
     document.getElementById('btn-submit-login').addEventListener('click', () => submitAuth('login'));
     document.getElementById('btn-submit-register').addEventListener('click', () => submitAuth('register'));
 
-    // Listeners Pago (Simulación)
+    // Payment Listeners
     document.getElementById('close-payment-btn').addEventListener('click', () => document.getElementById('payment-modal').classList.add('hidden'));
     document.getElementById('btn-confirm-payment').addEventListener('click', processPayment);
 
     document.getElementById('cart-items').addEventListener('click', e => {
         const btn = e.target.closest('.remove-item-btn');
-        if (!btn) return;
-        const reservaId = parseInt(btn.dataset.reservaId, 10);
-        if (reservaId) removeCartItem(reservaId);
+        if (btn) removeCartItem(parseInt(btn.dataset.reservaId, 10));
     });
 });
 
 function initAuth() {
     const savedUser = localStorage.getItem('ticketing_user');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        actualizarUI();
-    } else {
-        actualizarUI();
-        openAuthModal();
-    }
+    if (savedUser) currentUser = JSON.parse(savedUser);
+    actualizarUI();
+    if (!currentUser) openAuthModal();
 }
 
 function actualizarUI() {
@@ -81,22 +86,27 @@ function switchAuthTab(tab) {
 }
 
 async function submitAuth(action) {
-    const endpoint = action === 'login' ? `${API_BASE}/auth/login` : `${API_BASE}/auth/register`;
-    let bodyData = {};
+    const isLogin = action === 'login';
+    const endpoint = isLogin ? `${API_BASE}/auth/login` : `${API_BASE}/auth/register`;
 
-    if (action === 'login') {
-        bodyData.email = document.getElementById('auth-email-login').value.trim();
-        bodyData.password = document.getElementById('auth-password-login').value.trim();
-        bodyData.nombre = "N/A";
-    } else {
-        bodyData.email = document.getElementById('auth-email-reg').value.trim();
-        bodyData.password = document.getElementById('auth-password-reg').value.trim();
-        bodyData.nombre = document.getElementById('auth-nombre-reg').value.trim();
+    const bodyData = {
+        email: document.getElementById(isLogin ? 'auth-email-login' : 'auth-email-reg').value.trim(),
+        password: document.getElementById(isLogin ? 'auth-password-login' : 'auth-password-reg').value.trim(),
+        nombre: isLogin ? "N/A" : document.getElementById('auth-nombre-reg').value.trim()
+    };
+
+    if (!bodyData.email || !bodyData.password || (!isLogin && !bodyData.nombre)) {
+        return showToast('Por favor, completá todos los campos.', 'error');
     }
 
-    if (!bodyData.email || !bodyData.password || (action === 'register' && !bodyData.nombre)) {
-        showToast('Por favor, completá todos los campos.', 'error');
-        return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bodyData.email)) {
+        return showToast('Formato de email inválido.', 'error');
+    }
+
+    if (!isLogin) {
+        if (/\d/.test(bodyData.nombre)) return showToast('El nombre no puede contener números.', 'error');
+        if (bodyData.nombre.length < 2) return showToast('El nombre es muy corto.', 'error');
+        if (bodyData.password.length < 6) return showToast('La contraseña debe tener al menos 6 caracteres.', 'error');
     }
 
     try {
@@ -117,8 +127,8 @@ async function submitAuth(action) {
             const errorData = await response.json();
             showToast(`Error: ${errorData.error}`, 'error');
         }
-    } catch (err) {
-        showToast('Error de conexión.', 'error');
+    } catch {
+        showToast('Error de conexión al servidor.', 'error');
     }
 }
 
@@ -128,10 +138,6 @@ function logout() {
     window.location.href = window.location.pathname;
 }
 
-// ==========================================
-// SESSION MANAGAMENT (PLAN B) & SIGNALR
-// ==========================================
-
 function initSignalR() {
     connection = new signalR.HubConnectionBuilder()
         .withUrl("/ticketingHub")
@@ -139,13 +145,12 @@ function initSignalR() {
         .build();
 
     connection.on("SeatMapUpdated", () => {
-        // Solo refrescar si el mapa está visible
         if (!document.getElementById('seat-map-section').classList.contains('hidden')) {
             refreshSeatMap();
         }
     });
 
-    connection.start().catch(err => console.error("Error conectando a SignalR: ", err));
+    connection.start().catch(err => console.error("SignalR Error:", err));
 }
 
 async function checkActiveSession() {
@@ -154,44 +159,34 @@ async function checkActiveSession() {
         const response = await fetch(`${API_BASE}/sessions/active/${currentUser.id}`);
         if (response.ok) {
             const data = await response.json();
-            // Restaura la sesión activa
             currentSessionId = data.sesionId;
             currentEventId = data.eventoId;
             currentEventName = data.eventoNombre;
 
-            // Restaura reservas en carrito
             data.reservas.forEach(p => {
                 if (!document.getElementById(`cart-item-${p.reservaId}`)) {
                     addCartItem(p.butaca, p.reservaId, data.eventoNombre);
                 }
             });
 
-            // Inicia timer visual
             startGlobalTimer(new Date(data.expiracionGlobal));
-
-            // Carga el mapa
             showSeatMapSection(data.eventoNombre);
             refreshSeatMap();
         }
     } catch (error) {
-        console.error('No se pudo verificar la sesión:', error);
+        console.error('Error al verificar sesión:', error);
     }
 }
 
 function openQtyModal(event) {
-    if (!currentUser) {
-        openAuthModal();
-        return;
-    }
+    if (!currentUser) return openAuthModal();
 
-    // Si ya tiene una sesión activa para este evento, lo pasamos directo al mapa
     if (currentSessionId && currentEventId === event.id) {
         showSeatMapSection(event.nombre);
         refreshSeatMap();
         return;
     } else if (currentSessionId && currentEventId !== event.id) {
-        showToast('Tienes una sesión activa en otro evento. Cancélala primero.', 'error');
-        return;
+        return showToast('Tienes una sesión activa en otro evento. Cancélala primero.', 'error');
     }
 
     pendingEventToLoad = event;
@@ -200,12 +195,10 @@ function openQtyModal(event) {
 }
 
 async function startSession() {
-    const qtyInput = document.getElementById('ticket-qty-input');
-    const limiteElegido = parseInt(qtyInput.value, 10);
+    const limiteElegido = parseInt(document.getElementById('ticket-qty-input').value, 10);
 
     if (isNaN(limiteElegido) || limiteElegido < 1 || limiteElegido > 10) {
-        showToast('Por favor, ingresá una cantidad válida (1 a 10).', 'error');
-        return;
+        return showToast('Cantidad inválida (1 a 10).', 'error');
     }
 
     try {
@@ -224,15 +217,14 @@ async function startSession() {
         if (response.ok) {
             currentSessionId = data.sesionId;
             document.getElementById('qty-modal').classList.add('hidden');
-
             startGlobalTimer(new Date(data.expiracionGlobal));
             loadSeatMap(pendingEventToLoad);
             pendingEventToLoad = null;
         } else {
             showToast(data.error || 'Error al crear la sesión.', 'error');
         }
-    } catch (err) {
-        showToast('Error de conexión al iniciar sesión de compra.', 'error');
+    } catch {
+        showToast('Error de conexión al iniciar sesión.', 'error');
     }
 }
 
@@ -248,19 +240,17 @@ function startGlobalTimer(expiracion) {
         if (msRestantes <= 0) {
             clearInterval(globalTimerInterval);
             globalTimerInterval = null;
-
             timerEl.textContent = '00:00';
             timerEl.classList.add('expired');
-
-            showToast('Tu sesión ha expirado. Las butacas han sido liberadas.', 'error');
+            showToast('Sesión expirada. Butacas liberadas.', 'error');
             resetSessionUI();
             showEventsSection();
             return;
         }
 
-        const minutos = Math.floor(msRestantes / 60000);
-        const segundos = Math.floor((msRestantes % 60000) / 1000);
-        timerEl.textContent = `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+        const mins = Math.floor(msRestantes / 60000).toString().padStart(2, '0');
+        const secs = Math.floor((msRestantes % 60000) / 1000).toString().padStart(2, '0');
+        timerEl.textContent = `${mins}:${secs}`;
         timerEl.classList.toggle('expired', msRestantes < 60000);
     }
 
@@ -278,11 +268,6 @@ function resetSessionUI() {
     cartCount = 0;
     document.getElementById('cart-count').textContent = cartCount;
 }
-
-
-// ==========================================
-// EVENTOS Y MAPA
-// ==========================================
 
 async function loadEvents() {
     try {
@@ -308,13 +293,7 @@ function renderEvents(events) {
             <div class="event-detail">${event.lugar}</div>
         `;
 
-        if (esActivo) {
-            // AHORA LLAMA A openQtyModal en lugar de loadSeatMap directamente
-            card.addEventListener('click', () => openQtyModal(event));
-        } else {
-            card.addEventListener('click', () => showToast('Este evento ya no está disponible.', 'error'));
-        }
-
+        card.addEventListener('click', () => esActivo ? openQtyModal(event) : showToast('Evento no disponible.', 'error'));
         container.appendChild(card);
     });
 }
@@ -338,25 +317,18 @@ async function loadSeatMap(event) {
     await refreshSeatMap();
 }
 
-const seatRegistry = new Map();
-
 function renderSeatMap(seats) {
     const container = document.getElementById('seat-grid-container');
     container.innerHTML = '';
     seatRegistry.clear();
 
-    const sectors = {};
-    seats.forEach(seat => {
-        if (!sectors[seat.sectorNombre]) sectors[seat.sectorNombre] = [];
-        sectors[seat.sectorNombre].push(seat);
-    });
+    const sectors = seats.reduce((acc, seat) => {
+        if (!acc[seat.sectorNombre]) acc[seat.sectorNombre] = [];
+        acc[seat.sectorNombre].push(seat);
+        return acc;
+    }, {});
 
-    const orderedSectorNames = Object.keys(sectors).sort((a, b) => {
-        if (a.toLowerCase().includes('campo')) return -1;
-        if (b.toLowerCase().includes('campo')) return 1;
-        return 0;
-    });
-
+    const orderedSectorNames = Object.keys(sectors).sort((a, b) => a.toLowerCase().includes('campo') ? -1 : 1);
     const fragment = document.createDocumentFragment();
 
     orderedSectorNames.forEach(sectorName => {
@@ -364,11 +336,11 @@ function renderSeatMap(seats) {
         sectorDiv.className = 'sector-container';
         sectorDiv.innerHTML = `<h3 class="sector-title">Sector: ${sectorName}</h3>`;
 
-        const filas = {};
-        sectors[sectorName].forEach(seat => {
-            if (!filas[seat.fila]) filas[seat.fila] = [];
-            filas[seat.fila].push(seat);
-        });
+        const filas = sectors[sectorName].reduce((acc, seat) => {
+            if (!acc[seat.fila]) acc[seat.fila] = [];
+            acc[seat.fila].push(seat);
+            return acc;
+        }, {});
 
         Object.keys(filas).sort().forEach(filaName => {
             const rowDiv = document.createElement('div');
@@ -388,22 +360,17 @@ function renderSeatMap(seats) {
                     seatEl.dataset.butacaId = seat.butacaId;
                     seatRegistry.set(String(seat.butacaId), seat);
                 }
-
                 rowDiv.appendChild(seatEl);
             });
-
             sectorDiv.appendChild(rowDiv);
         });
-
         fragment.appendChild(sectorDiv);
     });
-
     container.appendChild(fragment);
 }
 
 function initSeatMapClickDelegation() {
-    const container = document.getElementById('seat-grid-container');
-    container.addEventListener('click', e => {
+    document.getElementById('seat-grid-container').addEventListener('click', e => {
         const seatEl = e.target.closest('.seat.disponible');
         if (!seatEl) return;
         const seat = seatRegistry.get(seatEl.dataset.butacaId);
@@ -415,34 +382,22 @@ async function refreshSeatMap() {
     if (!currentEventId) return;
     try {
         const response = await fetch(`${API_BASE}/events/${currentEventId}/seats`);
-        if (response.ok) {
-            const seats = await response.json();
-            renderSeatMap(seats);
-        }
+        if (response.ok) renderSeatMap(await response.json());
     } catch (error) {
-        console.error('Error refrescando el mapa:', error);
+        console.error('Error refrescando mapa:', error);
     }
 }
 
-// ==========================================
-// RESERVAS (ASOCIADAS A SESIÓN GLOBAL)
-// ==========================================
-
 async function reserveSeat(seat, seatElement) {
-    if (!currentSessionId) {
-        showToast('No tienes una sesión de compra activa.', 'error');
-        return;
-    }
+    if (!currentSessionId) return showToast('No tienes sesión activa.', 'error');
+
     seatElement.classList.add('processing');
 
     try {
         const response = await fetch(`${API_BASE}/reservations`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sesionId: currentSessionId,
-                butacaId: seat.butacaId
-            })
+            body: JSON.stringify({ sesionId: currentSessionId, butacaId: seat.butacaId })
         });
 
         const status = response.status;
@@ -452,7 +407,6 @@ async function reserveSeat(seat, seatElement) {
             seatElement.className = 'seat reservada';
             const newSeat = seatElement.cloneNode(true);
             seatElement.parentNode.replaceChild(newSeat, seatElement);
-
             addCartItem(seat, data.reservaId, currentEventName);
             showToast('¡Reserva exitosa!', 'success');
         } else if (status === 409) {
@@ -463,21 +417,17 @@ async function reserveSeat(seat, seatElement) {
             seatElement.classList.remove('processing');
             showToast(data?.error || 'No se pudo reservar.', 'error');
         }
-    } catch (error) {
+    } catch {
         seatElement.classList.remove('processing');
-        showToast('Error de conexión. Revisá tu red.', 'error');
+        showToast('Error de conexión.', 'error');
     }
 }
 
-let cartCount = 0;
-
 function updateCartCount(delta) {
-    cartCount += delta;
-    if (cartCount < 0) cartCount = 0;
+    cartCount = Math.max(0, cartCount + delta);
     document.getElementById('cart-count').textContent = cartCount;
 }
 
-// No pasamos expiración individual porque usamos la global
 function addCartItem(seat, reservaId, eventoNombre) {
     const cartContainer = document.getElementById('cart-items');
     const cartItem = document.createElement('div');
@@ -490,7 +440,7 @@ function addCartItem(seat, reservaId, eventoNombre) {
             <p>Sector ${seat.sectorNombre} — Fila ${seat.fila}, Butaca ${seat.numeroAsiento}</p>
         </div>
         <div class="cart-item-actions">
-            <button class="remove-item-btn" data-reserva-id="${reservaId}" title="Quitar reserva">×</button>
+            <button class="remove-item-btn" data-reserva-id="${reservaId}" title="Quitar reserva">&times;</button>
         </div>
     `;
 
@@ -499,28 +449,25 @@ function addCartItem(seat, reservaId, eventoNombre) {
     openCart();
 }
 
-
 async function removeCartItem(reservaId) {
     try {
         const response = await fetch(`${API_BASE}/reservations/${reservaId}/cancel`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuarioId: currentUser.id }) // Si backend requiere validacion
+            body: JSON.stringify({ usuarioId: currentUser.id })
         });
-
-        const data = await response.json();
 
         if (response.ok) {
             const cartItem = document.getElementById(`cart-item-${reservaId}`);
             if (cartItem) cartItem.remove();
-
             updateCartCount(-1);
             showToast('Reserva removida.', 'success');
             refreshSeatMap();
         } else {
-            showToast(data?.error || 'Error al cancelar la reserva.', 'error');
+            const data = await response.json();
+            showToast(data?.error || 'Error al cancelar reserva.', 'error');
         }
-    } catch (error) {
+    } catch {
         showToast('Error de conexión.', 'error');
     }
 }
@@ -541,57 +488,29 @@ function toggleCart() { document.getElementById('cart-drawer').classList.toggle(
 function openCart() { document.getElementById('cart-drawer').classList.add('open'); }
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); }
 
-function openPaymentModal() {
-    if (!currentUser) return;
-    const cartItems = document.getElementById('cart-items').children;
-    if (cartItems.length === 0) {
-        showToast('El carrito está vacío.', 'error');
-        return;
-    }
-    // Limpiar campos
-    document.getElementById('card-number').value = '';
-    document.getElementById('card-expiry').value = '';
-    document.getElementById('card-cvv').value = '';
-    
-    document.getElementById('payment-modal').classList.remove('hidden');
-}
-
 async function processPayment() {
-    const cardNum = document.getElementById('card-number').value.replace(/\s/g, '');
+    const cardNum = document.getElementById('card-number').value;
     const cardExpiry = document.getElementById('card-expiry').value;
     const cardCvv = document.getElementById('card-cvv').value;
 
-    // Validaciones simples de simulación
-    if (cardNum.length !== 16 || isNaN(cardNum)) {
-        showToast('El número de tarjeta debe tener 16 dígitos.', 'error');
-        return;
-    }
-    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
-        showToast('La fecha debe tener el formato MM/YY.', 'error');
-        return;
-    }
-    if (cardCvv.length !== 3 || isNaN(cardCvv)) {
-        showToast('El CVV debe tener 3 dígitos.', 'error');
-        return;
-    }
+    if (cardNum.length !== 16) return showToast('El número debe tener 16 dígitos.', 'error');
+    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) return showToast('Formato MM/YY requerido.', 'error');
+    if (cardCvv.length !== 3) return showToast('El CVV debe tener 3 dígitos.', 'error');
 
-    // Si pasa "validación", procedemos al pago real en backend
     document.getElementById('payment-modal').classList.add('hidden');
-    
-    const cartItems = document.getElementById('cart-items').children;
-    const reservaIds = Array.from(cartItems).map(item => parseInt(item.id.replace('cart-item-', '')));
-    let successCount = 0;
-    
+    const reservaIds = Array.from(document.getElementById('cart-items').children).map(item => parseInt(item.id.replace('cart-item-', '')));
+
     const confirmBtn = document.getElementById('btn-confirm-payment');
     confirmBtn.textContent = 'Procesando...';
     confirmBtn.disabled = true;
 
+    let successCount = 0;
     for (const reservaId of reservaIds) {
         try {
             const response = await fetch(`${API_BASE}/payments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reservaId: reservaId, usuarioId: currentUser.id })
+                body: JSON.stringify({ reservaId, usuarioId: currentUser.id })
             });
 
             if (response.ok) {
@@ -601,7 +520,7 @@ async function processPayment() {
                 successCount++;
             }
         } catch (error) {
-            console.error(error);
+            console.error('Error procesando pago:', error);
         }
     }
 
@@ -609,7 +528,7 @@ async function processPayment() {
     confirmBtn.disabled = false;
 
     if (successCount > 0) {
-        showToast(`¡Pago realizado con éxito! Se procesaron ${successCount} entradas.`, 'success');
+        showToast(`¡Pago de ${successCount} entrada(s) exitoso!`, 'success');
         refreshSeatMap();
         if (document.getElementById('cart-items').children.length === 0) {
             closeCart();
@@ -618,16 +537,11 @@ async function processPayment() {
     }
 }
 
-// Renombramos payAll para que solo abra el modal
-function payAll() {
-    openPaymentModal();
-}
-
 async function cancelOperation() {
     if (currentSessionId) {
         try {
             await fetch(`${API_BASE}/sessions/${currentSessionId}/cancel`, { method: 'POST' });
-        } catch (e) { }
+        } catch (e) { console.error('Error cancelando sesión', e); }
     }
     resetSessionUI();
     showEventsSection();

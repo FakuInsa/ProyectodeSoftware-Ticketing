@@ -90,7 +90,7 @@ namespace Ticketing.Services
 
                 // Enviamos el fallo FUERA de la transacción revertida,
                 // usando un scope nuevo del AuditService para que este registro sí persista aunque la tx principal haya fallado.
-                await _auditService.LogAsync(
+                await _auditService.LogIndependentAsync(
                     request.UsuarioId,
                     "PAYMENT_FAILED",
                     "Reserva",

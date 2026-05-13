@@ -72,7 +72,7 @@ namespace Ticketing.Controllers
                 .Include(s => s.Evento)
                 .Include(s => s.Reservas)
                     .ThenInclude(r => r.Butaca)
-                        .ThenInclude(b => b.Sector)
+                        .ThenInclude(b => b!.Sector)
                 .FirstOrDefaultAsync(s => s.UsuarioId == usuarioId && s.Estado == "Activa" && s.ExpiracionGlobal > now);
 
             if (sesionActiva == null)

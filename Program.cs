@@ -54,7 +54,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Comentado para evitar problemas de bucle de redirección o conexión rechazada en Docker sin certificados SSL
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthorization();
