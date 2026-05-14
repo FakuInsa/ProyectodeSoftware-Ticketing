@@ -23,17 +23,13 @@ namespace Ticketing.Controllers
 
             if (!result.Success)
             {
-                // Si el mensaje es el que definimos en el catch del servicio...
-                if (result.Message == "CONCURRENCY_ERROR")
+                // Si la DB detecta choque en el mismo milisegundo (CONCURRENCY_ERROR) 
+                // O si entró 1 milisegundo tarde y la app detecta que ya está ocupada ("Butaca no disponible.")
+                if (result.Message == "CONCURRENCY_ERROR" || result.Message == "Butaca no disponible.")
                 {
-                    // Devolvemos el código 409 Conflict
-                    return Conflict(new
-                    {
-                        error = "La butaca ya no está disponible. Fue seleccionada por otro usuario en este instante."
-                    });
+                    return Conflict(new { error = "Conflicto: La butaca ya fue reservada." });
                 }
 
-                // Para cualquier otro error (datos inválidos, etc.), devolvemos 400
                 return BadRequest(new { error = result.Message });
             }
 
