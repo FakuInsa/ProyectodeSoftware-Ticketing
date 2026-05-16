@@ -1183,21 +1183,34 @@ modal-content {
 }
 
 /* GENERAL (CAMPO) */
+/* =========================================
+   COLORES DE FONDO OSCUROS PARA LOS CONTENEDORES 
+   ========================================= */
+
 .sector-general {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1));
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: linear-gradient(135deg, #0f1115, rgba(99, 102, 241, 0.02)) !important;
+    border: 1px solid rgba(99, 102, 241, 0.15) !important;
     padding: 1.5rem;
     border-radius: 12px;
 }
 
-/* PLATEA CENTRAL */
+.sector-platea-central,
+.sector-lateral-izq,
+.sector-lateral-der {
+    background: linear-gradient(135deg, #0f1115, rgba(6, 182, 212, 0.02)) !important;
+    border: 1px solid rgba(6, 182, 212, 0.15) !important;
+}
+
 .sector-platea-central {
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.05), rgba(234, 179, 8, 0.1));
-    border: 1px solid rgba(234, 179, 8, 0.3);
     padding: 1.5rem 1rem 1rem 1rem;
     border-radius: 12px;
     position: relative;
     z-index: 2;
+}
+
+.sector-palco {
+    background: linear-gradient(135deg, #0f1115, rgba(168, 85, 247, 0.02)) !important;
+    border: 1px solid rgba(168, 85, 247, 0.15) !important;
 }
 
 /* =========================================
@@ -1273,10 +1286,74 @@ modal-content {
     margin: 2px;
 }
 
-/* --- REGLAS ESTRICTAS SOLO PARA PC (> 992px) --- */
-@media (min-width: 992px) {
+/* =========================================
+   --- DISEÑO ADAPTATIVO AVANZADO ---
+   ========================================= */
+
+/* 1. COMPORTAMIENTO PARA PC COMPACTA / TABLETS (Desde 992px hasta 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    #seat-grid-container {
+        grid-template-columns: 1fr auto 1fr;
+        grid-template-areas:
+            ".           escenario       ."
+            "lateral-izq general         lateral-der"
+            ".           platea-central  ."
+            "palco-a     palco-b         ."
+            "palco-c     palco-d         .";
+        /* Los palcos se acomodan de a dos sin pisar nada */
+        align-items: center;
+        justify-items: center;
+        gap: 1.5rem;
+    }
+
     .sector-container {
         width: max-content;
+    }
+
+    .sector-lateral-izq,
+    .sector-lateral-der {
+        margin-top: 0;
+        transform: none;
+    }
+
+    .sector-palco {
+        margin-top: 0 !important;
+        transform: none !important;
+        max-width: 140px;
+    }
+
+    .sector-palco .seat-row {
+        max-width: 110px;
+    }
+}
+
+/* 2. DISEÑO PARA MONITORES GRANDES (Desde 1200px en adelante) */
+@media (min-width: 1200px) {
+    #seat-grid-container {
+        grid-template-columns: 1fr auto min-content auto 1fr;
+        grid-template-areas:
+            ".           .           escenario       .           ."
+            ".           lateral-izq general         lateral-der ."
+            ".           .           platea-central  .           ."
+            "palco-a     palco-b     .               palco-c     palco-d";
+        align-items: start;
+        justify-items: center;
+        column-gap: 1.5rem;
+        row-gap: 0.5rem;
+    }
+
+    .sector-container {
+        width: max-content;
+    }
+
+    .sector-lateral-izq {
+        margin-top: 1.5rem;
+        transform: perspective(800px) rotateY(15deg);
+    }
+
+    .sector-lateral-der {
+        margin-top: 1.5rem;
+        transform: perspective(800px) rotateY(-15deg);
     }
 
     .sector-palco {
@@ -1287,25 +1364,29 @@ modal-content {
         max-width: 110px;
     }
 
-    .sector-platea-central .seat-row>div:nth-child(1),
-    .sector-platea-central .seat-row>div:nth-child(2),
-    .sector-platea-central .seat-row>div:nth-last-child(1) {
-        transform: translateY(-8px);
+    .palco-a {
+        margin-top: -6rem;
+        transform: translateY(-35px);
     }
 
-    .sector-platea-central .seat-row>div:nth-child(3),
-    .sector-platea-central .seat-row>div:nth-last-child(2) {
-        transform: translateY(-4px);
+    .palco-b {
+        margin-top: -6rem;
+        transform: translateY(25px);
     }
 
-    .sector-platea-central .seat-row>div:nth-child(4),
-    .sector-platea-central .seat-row>div:nth-last-child(3) {
-        transform: translateY(-1px);
+    .palco-c {
+        margin-top: -6rem;
+        transform: translateY(25px);
+    }
+
+    .palco-d {
+        margin-top: -6rem;
+        transform: translateY(-35px);
     }
 }
 
 /* =========================================
-   CUADRO DE PRECIOS INTELIGENTE
+   REGLAS DEL CUADRO DE PRECIOS INTELIGENTE
    ========================================= */
 #seat-map-section {
     position: relative;
@@ -1323,56 +1404,8 @@ modal-content {
     max-width: 100%;
 }
 
-.price-legend-box h3 {
-    color: var(--text-primary);
-    font-size: 1rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
 
-.price-legend-box ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.price-legend-box li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
-.color-box {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-}
-
-.palco-color {
-    background: rgba(168, 85, 247, 0.3);
-    border: 1px solid #c084fc;
-}
-
-.platea-color {
-    background: rgba(234, 179, 8, 0.2);
-    border: 1px solid #eab308;
-}
-
-.general-color {
-    background: rgba(34, 197, 94, 0.2);
-    border: 1px solid #22c55e;
-}
-
-@media (min-width: 1350px) {
+@media (min-width: 1400px) {
     .price-legend-box {
         position: absolute;
         left: 0;
@@ -1439,4 +1472,62 @@ modal-content {
     .footer-links {
         gap: 1rem;
     }
+}
+
+/* =========================================
+   FORZAR ESTILOS DE LA LISTA DINÁMICA
+   ========================================= */
+.price-legend-box ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.price-legend-box li {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.price-legend-box .color-box {
+    display: inline-block !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 4px !important;
+    flex-shrink: 0;
+}
+
+
+.price-legend-box .general-color {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.5) !important;
+}
+
+.price-legend-box .platea-color {
+    background: rgba(6, 182, 212, 0.15) !important;
+    border: 1px solid rgba(6, 182, 212, 0.5) !important;
+
+}
+
+.price-legend-box .palco-color {
+    background: rgba(168, 85, 247, 0.15) !important;
+    border: 1px solid rgba(168, 85, 247, 0.5) !important;
+
+}
+
+.price-legend-box h3 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding-bottom: 0.6rem;
+    text-transform: none !important;
+    letter-spacing: -0.01em;
 }
