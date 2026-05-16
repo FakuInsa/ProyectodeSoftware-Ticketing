@@ -898,7 +898,6 @@ modal-content {
         margin-bottom: 1.5rem;
     }
 
-    /* Título responsivo */
     #event-title {
         font-size: 1.5rem;
         margin-top: 0.5rem;
@@ -946,7 +945,6 @@ modal-content {
         flex-wrap: wrap;
     }
 
-    /* Estadio y Scroll */
     .sector-container {
         width: 100%;
         max-width: 100vw;
@@ -968,7 +966,6 @@ modal-content {
         padding-right: 1.5rem;
     }
 
-    /* Simetría: Desactivamos espejo en celular */
     .sector-lateral-der .seat-row {
         flex-direction: row;
     }
@@ -979,14 +976,12 @@ modal-content {
         text-align: right;
     }
 
-    /* Butacas táctiles */
     .seat {
         width: 30px !important;
         height: 30px !important;
         font-size: 0.65rem !important;
     }
 
-    /* Notificaciones y Carrito */
     .toast {
         left: 50%;
         right: auto;
@@ -1120,7 +1115,6 @@ modal-content {
 /* --- DISEÑO PARA PC --- */
 @media (min-width: 992px) {
     #seat-grid-container {
-        /* Pegamos los laterales al centro */
         grid-template-columns: 1fr auto min-content auto 1fr;
         grid-template-areas:
             ".           .           escenario       .           ."
@@ -1130,7 +1124,6 @@ modal-content {
         align-items: start;
         justify-items: center;
 
-        /* Compactamos el estadio */
         column-gap: 1.5rem;
         row-gap: 0.5rem;
     }
@@ -1145,7 +1138,6 @@ modal-content {
         transform: perspective(800px) rotateY(-15deg);
     }
 
-    /* Posicionamiento palcos */
     .palco-a {
         margin-top: -15rem;
         transform: translateY(-60px);
@@ -1175,7 +1167,6 @@ modal-content {
 .sector-container {
     margin-bottom: 0 !important;
     width: 100%;
-    /* Reseteo para móviles */
 }
 
 .seat {
@@ -1220,7 +1211,6 @@ modal-content {
 .sector-lateral-der {
     margin-top: 1.5rem;
     transform: perspective(800px) rotateY(-15deg);
-    /* Ajuste de simetría */
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
@@ -1244,7 +1234,6 @@ modal-content {
     border-radius: 12px;
     padding: 1rem;
     width: 100%;
-    /* En móviles ocupa todo el ancho disponible */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
@@ -1288,19 +1277,16 @@ modal-content {
 @media (min-width: 992px) {
     .sector-container {
         width: max-content;
-        /* Recién en PC achicamos las cajas al contenido */
     }
 
     .sector-palco {
         max-width: 140px;
-        /* Recién en PC hacemos las cajitas chicas */
     }
 
     .sector-palco .seat-row {
         max-width: 110px;
     }
 
-    /* Curvatura de la Platea Central */
     .sector-platea-central .seat-row>div:nth-child(1),
     .sector-platea-central .seat-row>div:nth-child(2),
     .sector-platea-central .seat-row>div:nth-last-child(1) {
@@ -1332,8 +1318,6 @@ modal-content {
     padding: 1.5rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
-
-    /* Por defecto, se acomoda arriba del mapa, centrado, ideal para Notebooks y Celulares */
     margin: 0 auto 2rem auto;
     width: max-content;
     max-width: 100%;
@@ -1388,9 +1372,6 @@ modal-content {
     border: 1px solid #22c55e;
 }
 
-/* ¡LA MAGIA DEL FLOTANTE! 
-   Solo si la pantalla es inmensa (>1350px), lo mandamos a la izquierda como querías. 
-*/
 @media (min-width: 1350px) {
     .price-legend-box {
         position: absolute;
@@ -1398,6 +1379,64 @@ modal-content {
         top: 150px;
         z-index: 100;
         margin: 0;
-        /* Anulamos el margen porque ahora está flotando */
+    }
+}
+
+.main-footer {
+    background: rgba(13, 15, 18, 0.95);
+    border-top: 1px solid var(--card-border);
+    padding: 0.8rem 2rem;
+    margin-top: auto;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.footer-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+}
+
+.footer-text strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+    .main-footer {
+        padding: 1rem;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+
+    .footer-links {
+        gap: 1rem;
     }
 }

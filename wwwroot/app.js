@@ -267,6 +267,7 @@ function resetSessionUI() {
     document.getElementById('cart-items').innerHTML = '';
     cartCount = 0;
     document.getElementById('cart-count').textContent = cartCount;
+    updateCartTotal();
 }
 
 async function loadEvents() {
@@ -279,6 +280,7 @@ async function loadEvents() {
     }
 }
 
+// render events 
 function renderEvents(events) {
     const container = document.getElementById('events-container');
     container.innerHTML = '';
@@ -488,16 +490,31 @@ function updateCartCount(delta) {
     document.getElementById('cart-count').textContent = cartCount;
 }
 
+function updateCartTotal() {
+    const cartItems = document.querySelectorAll('.cart-item');
+    let total = 0;
+    cartItems.forEach(item => {
+        total += parseFloat(item.dataset.precio || 0);
+    });
+
+    const totalElement = document.getElementById('cart-total-amount');
+    if (totalElement) {
+        totalElement.textContent = `$${total.toFixed(2)}`;
+    }
+}
+
 function addCartItem(seat, reservaId, eventoNombre) {
     const cartContainer = document.getElementById('cart-items');
     const cartItem = document.createElement('div');
     cartItem.className = 'cart-item';
     cartItem.id = `cart-item-${reservaId}`;
+    cartItem.dataset.precio = seat.precio || 0;
 
     cartItem.innerHTML = `
         <div class="cart-item-info">
            <h4>${eventoNombre ?? 'Evento'}</h4> 
             <p>Sector ${seat.sectorNombre} — Fila ${seat.fila}, Butaca ${seat.numeroAsiento}</p>
+            <p class="item-price"><strong>Precio: $${(seat.precio || 0).toFixed(2)}</strong></p>
         </div>
         <div class="cart-item-actions">
             <button class="remove-item-btn" data-reserva-id="${reservaId}" title="Quitar reserva">&times;</button>
@@ -506,6 +523,7 @@ function addCartItem(seat, reservaId, eventoNombre) {
 
     cartContainer.appendChild(cartItem);
     updateCartCount(1);
+    updateCartTotal();
     openCart();
 }
 
@@ -521,6 +539,7 @@ async function removeCartItem(reservaId) {
             const cartItem = document.getElementById(`cart-item-${reservaId}`);
             if (cartItem) cartItem.remove();
             updateCartCount(-1);
+            updateCartTotal();
             showToast('Reserva removida.', 'success');
             refreshSeatMap();
         } else {
@@ -587,12 +606,14 @@ async function processPayment() {
     confirmBtn.textContent = 'Pagar Ahora';
     confirmBtn.disabled = false;
 
+    updateCartTotal();
+
     if (successCount > 0) {
         showToast(`¡Pago de ${successCount} entrada(s) exitoso!`, 'success');
         refreshSeatMap();
         if (document.getElementById('cart-items').children.length === 0) {
             closeCart();
-            cancelOperation();
+            finishSession();
         }
     }
 }
@@ -602,6 +623,16 @@ async function cancelOperation() {
         try {
             await fetch(`${API_BASE}/sessions/${currentSessionId}/cancel`, { method: 'POST' });
         } catch (e) { console.error('Error cancelando sesión', e); }
+    }
+    resetSessionUI();
+    showEventsSection();
+}
+
+async function finishSession() {
+    if (currentSessionId) {
+        try {
+            await fetch(`${API_BASE}/sessions/${currentSessionId}/complete`, { method: 'POST' });
+        } catch (e) { console.error('Error completando sesión', e); }
     }
     resetSessionUI();
     showEventsSection();

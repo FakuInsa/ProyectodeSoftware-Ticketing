@@ -93,6 +93,7 @@ namespace Ticketing.Controllers
                     {
                         butacaId = r.ButacaId,
                         sectorNombre = r.Butaca?.Sector?.Nombre,
+                        precio = r.Butaca?.Sector?.Precio,
                         fila = r.Butaca?.Fila,
                         numeroAsiento = r.Butaca?.NumeroAsiento
                     }
@@ -129,6 +130,21 @@ namespace Ticketing.Controllers
             await _context.SaveChangesAsync();
             
             await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
+
+            return Ok();
+        }
+
+        [HttpPost("{sesionId}/complete")]
+        public async Task<IActionResult> CompleteSession(int sesionId)
+        {
+            var sesion = await _context.SesionesReserva.FindAsync(sesionId);
+            if (sesion == null) return NotFound();
+
+            if (sesion.Estado == "Activa")
+            {
+                sesion.Estado = "Completada";
+                await _context.SaveChangesAsync();
+            }
 
             return Ok();
         }

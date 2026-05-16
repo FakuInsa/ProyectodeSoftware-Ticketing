@@ -124,7 +124,7 @@ namespace Ticketing.Data
             var evento2 = new Evento
             {
                 Nombre = "Festival de Rock",
-                Fecha = new DateTime(2027, 1, 10),
+                Fecha = new DateTime(2027, 1, 10, 0, 0, 0, DateTimeKind.Utc),
                 Lugar = "Estadio Central",
                 Estado = "Inactivo"
             };
