@@ -7,7 +7,7 @@ namespace Ticketing.Models
         public int Id { get; set; }
         public int ButacaId { get; set; }
 
-        // Propiedad de navegación sugerida por Entity Framework Core
+        // Relación con Butaca
         public Butaca? Butaca { get; set; }
 
         public DateTime FechaCreacion { get; set; }
@@ -18,7 +18,7 @@ namespace Ticketing.Models
         public int SesionId { get; set; }
         public virtual SesionReserva Sesion { get; set; } = null!;
 
-        // Estado de la reserva ('Pending', 'Paid', 'Expired')
+        // Estado: Pending, Paid, Expired
         public string Estado { get; set; } = "Pending";
 
     }

@@ -24,13 +24,13 @@ namespace Ticketing.Services
 
         public async Task<(bool Success, string Message)> ConfirmPaymentAsync(ConfirmPaymentRequest request)
         {
-            // Traemos la reserva junto con la butaca en una sola query para no hacer dos roundtrips a la DB
+            // Traigo la reserva y la butaca de una para no ir dos veces a la base
             var reserva = await _context.Reservas
                 .Include(r => r.Butaca)
                 .Include(r => r.Sesion)
                 .FirstOrDefaultAsync(r => r.Id == request.ReservaId);
 
-            // Validaciones previas a la transacción
+            // Validamos un par de cosas antes de arrancar
             if (reserva == null)
                 return (false, "Reserva no encontrada.");
 
@@ -40,30 +40,26 @@ namespace Ticketing.Services
             if (reserva.Estado != "Pending")
                 return (false, $"La reserva ya fue procesada. Estado actual: {reserva.Estado}.");
 
-            // Verificamos que la reserva no haya expirado mediante su Sesión.
+            // Checkeamos que no haya expirado la sesion
             if (DateTime.UtcNow > reserva.Sesion.ExpiracionGlobal)
                 return (false, "La sesión ha expirado. El asiento fue liberado.");
 
-            
-            // TRANSACCIÓN ACID
-            // Abrimos una transacción explícita. Si cualquiera de las 3 operaciones dentro falla, el catch ejecuta Rollback y la DB
-            // queda exactamente como estaba antes. Nada queda a medias.
-           
+
+            // Metemos todo en una transacción ACID para que no quede nada a medias
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // Operación 1: cambiar butaca a Vendida
+                // Pasamos la butaca a Vendida
                 reserva.Butaca!.Estado = EstadoButaca.Vendida;
 
-                // Operación 2: marcar la reserva como Paid
+                // Y la reserva a Pagada
                 reserva.Estado = "Paid";
 
-                // Guardamos ambos cambios en la misma unidad de trabajo.EF Core los envía en un solo batch a la DB dentro de la tx.
+                // Guardamos los cambios. EF Core manda todo junto
                 await _context.SaveChangesAsync();
 
-                // Operación 3: registrar en auditoría
-                // Lo hacemos DENTRO de la transacción para que si esto falla,también se revierta todo lo anterior. Así garantizamos que nunca haya un pago confirmado sin su registro de auditoría.
+                // Registramos en auditoría dentro de la misma transacción
                 await _auditService.LogAsync(
                     request.UsuarioId,
                     "PAYMENT_SUCCESS",
@@ -75,7 +71,7 @@ namespace Ticketing.Services
                     $"\"fechaPago\": \"{DateTime.UtcNow:O}\"}}"
                 );
 
-                // Confirmamos la transacción — recién acá los cambios se vuelven visibles para el resto del sistema
+                // Si llegamos acá sin errores, confirmamos todo
                 await transaction.CommitAsync();
 
                 await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
@@ -84,12 +80,10 @@ namespace Ticketing.Services
             }
             catch (Exception ex)
             {
-                // Si cualquier cosa falló, revertimos TODO.La butaca vuelve a Reservada, la reserva sigue Pending,
-                // y no queda ningún registro de auditoría del intento.
+                // Si algo falla, rollback para que no se rompa nada
                 await transaction.RollbackAsync();
 
-                // Enviamos el fallo FUERA de la transacción revertida,
-                // usando un scope nuevo del AuditService para que este registro sí persista aunque la tx principal haya fallado.
+                // Registramos el fallo por separado para que quede constancia aunque la tx falle
                 await _auditService.LogIndependentAsync(
                     request.UsuarioId,
                     "PAYMENT_FAILED",

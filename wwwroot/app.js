@@ -267,6 +267,7 @@ function resetSessionUI() {
     document.getElementById('cart-items').innerHTML = '';
     cartCount = 0;
     document.getElementById('cart-count').textContent = cartCount;
+    updateCartTotal();
 }
 
 async function loadEvents() {
@@ -279,6 +280,7 @@ async function loadEvents() {
     }
 }
 
+// render events 
 function renderEvents(events) {
     const container = document.getElementById('events-container');
     container.innerHTML = '';
@@ -288,9 +290,18 @@ function renderEvents(events) {
         const esActivo = event.estado === 'Activo';
         card.className = esActivo ? 'event-card' : 'event-card inactivo';
 
+        // Convertimos la fecha del backend a un formato amigable con día de la semana
+        const fechaObj = new Date(event.fecha);
+        const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
+        let fechaFormateada = fechaObj.toLocaleDateString('es-ES', opciones);
+
+        // Ponemos la primera letra en mayúscula (ej: Viernes...)
+        fechaFormateada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+
         card.innerHTML = `
             <h3 class="event-title">${event.nombre}</h3>
-            <div class="event-detail">${event.lugar}</div>
+            <div class="event-detail">${fechaFormateada}</div>
+            <div class="event-detail"> ${event.lugar}</div>
         `;
 
         card.addEventListener('click', () => esActivo ? openQtyModal(event) : showToast('Evento no disponible.', 'error'));
@@ -320,27 +331,59 @@ async function loadSeatMap(event) {
 function renderSeatMap(seats) {
     const container = document.getElementById('seat-grid-container');
     container.innerHTML = '';
-    seatRegistry.clear();
 
-    const sectors = seats.reduce((acc, seat) => {
-        if (!acc[seat.sectorNombre]) acc[seat.sectorNombre] = [];
-        acc[seat.sectorNombre].push(seat);
-        return acc;
-    }, {});
+    // --- NUEVO: Generar Lista de Precios 100% Dinámica ---
+    const sectorPrices = {};
+    seats.forEach(seat => {
+        if (!sectorPrices[seat.sectorNombre]) {
+            sectorPrices[seat.sectorNombre] = seat.precio;
+        }
+    });
 
-    const orderedSectorNames = Object.keys(sectors).sort((a, b) => a.toLowerCase().includes('campo') ? -1 : 1);
-    const fragment = document.createDocumentFragment();
+    const priceListUl = document.querySelector('.price-legend-box ul');
+    if (priceListUl) {
+        priceListUl.innerHTML = '';
+
+        const sortedPrices = Object.entries(sectorPrices).sort((a, b) => b[1] - a[1]);
+
+        sortedPrices.forEach(([name, price]) => {
+            let colorClass = 'general-color';
+            const lower = name.toLowerCase();
+
+            if (lower.includes('palco')) colorClass = 'palco-color';
+            else if (lower.includes('platea') || lower.includes('izq') || lower.includes('der') || lower.includes('central')) colorClass = 'platea-color';
+
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="color-box ${colorClass}"></span> ${name}: $${Number(price).toLocaleString('es-AR')}`;
+            priceListUl.appendChild(li);
+        });
+    }
+    // ----------------------------------------------------
+
+    const sectors = {};
+    seats.forEach(seat => {
+        if (!sectors[seat.sectorNombre]) sectors[seat.sectorNombre] = [];
+        sectors[seat.sectorNombre].push(seat);
+    });
+
+    const orderedSectorNames = Object.keys(sectors).sort((a, b) => {
+        if (a.toLowerCase().includes('campo') || a.toLowerCase().includes('general')) return -1;
+        if (b.toLowerCase().includes('campo') || b.toLowerCase().includes('general')) return 1;
+        return 0;
+    });
 
     orderedSectorNames.forEach(sectorName => {
         const sectorDiv = document.createElement('div');
-        sectorDiv.className = 'sector-container';
-        sectorDiv.innerHTML = `<h3 class="sector-title">Sector: ${sectorName}</h3>`;
+        const sectorClass = getSectorClass(sectorName);
+        sectorDiv.className = `sector-container ${sectorClass}`;
 
-        const filas = sectors[sectorName].reduce((acc, seat) => {
-            if (!acc[seat.fila]) acc[seat.fila] = [];
-            acc[seat.fila].push(seat);
-            return acc;
-        }, {});
+        sectorDiv.innerHTML = `<h3 class="sector-title">${sectorName}</h3>`;
+
+        const filas = {};
+        sectors[sectorName].forEach(seat => {
+            if (!filas[seat.fila]) filas[seat.fila] = [];
+            filas[seat.fila].push(seat);
+        });
 
         Object.keys(filas).sort().forEach(filaName => {
             const rowDiv = document.createElement('div');
@@ -357,16 +400,35 @@ function renderSeatMap(seats) {
                 seatEl.textContent = seat.numeroAsiento;
 
                 if (seat.estado === 'Disponible') {
-                    seatEl.dataset.butacaId = seat.butacaId;
-                    seatRegistry.set(String(seat.butacaId), seat);
+                    seatEl.addEventListener('click', () => reserveSeat(seat, seatEl));
                 }
                 rowDiv.appendChild(seatEl);
             });
+
             sectorDiv.appendChild(rowDiv);
         });
-        fragment.appendChild(sectorDiv);
+
+        container.appendChild(sectorDiv);
     });
-    container.appendChild(fragment);
+}
+
+// Helper: devuelve clase CSS según el nombre del sector
+function getSectorClass(sectorName) {
+    const lower = sectorName.toLowerCase();
+
+    if (lower.includes('izquierda') || lower.includes('izq')) return 'sector-lateral-izq';
+    if (lower.includes('derecha') || lower.includes('der')) return 'sector-lateral-der';
+    if (lower.includes('general') || lower.includes('campo')) return 'sector-general';
+    if (lower.includes('central')) return 'sector-platea-central';
+
+    // NUEVO: Identificamos cada palco por separado para el CSS Grid
+    if (lower.includes('palco a')) return 'sector-palco palco-a';
+    if (lower.includes('palco b')) return 'sector-palco palco-b';
+    if (lower.includes('palco c')) return 'sector-palco palco-c';
+    if (lower.includes('palco d')) return 'sector-palco palco-d';
+
+    if (lower.includes('palco')) return 'sector-palco'; // Fallback
+    return 'sector-default';
 }
 
 function initSeatMapClickDelegation() {
@@ -428,16 +490,31 @@ function updateCartCount(delta) {
     document.getElementById('cart-count').textContent = cartCount;
 }
 
+function updateCartTotal() {
+    const cartItems = document.querySelectorAll('.cart-item');
+    let total = 0;
+    cartItems.forEach(item => {
+        total += parseFloat(item.dataset.precio || 0);
+    });
+
+    const totalElement = document.getElementById('cart-total-amount');
+    if (totalElement) {
+        totalElement.textContent = `$${total.toFixed(2)}`;
+    }
+}
+
 function addCartItem(seat, reservaId, eventoNombre) {
     const cartContainer = document.getElementById('cart-items');
     const cartItem = document.createElement('div');
     cartItem.className = 'cart-item';
     cartItem.id = `cart-item-${reservaId}`;
+    cartItem.dataset.precio = seat.precio || 0;
 
     cartItem.innerHTML = `
         <div class="cart-item-info">
            <h4>${eventoNombre ?? 'Evento'}</h4> 
             <p>Sector ${seat.sectorNombre} — Fila ${seat.fila}, Butaca ${seat.numeroAsiento}</p>
+            <p class="item-price"><strong>Precio: $${(seat.precio || 0).toFixed(2)}</strong></p>
         </div>
         <div class="cart-item-actions">
             <button class="remove-item-btn" data-reserva-id="${reservaId}" title="Quitar reserva">&times;</button>
@@ -446,6 +523,7 @@ function addCartItem(seat, reservaId, eventoNombre) {
 
     cartContainer.appendChild(cartItem);
     updateCartCount(1);
+    updateCartTotal();
     openCart();
 }
 
@@ -461,6 +539,7 @@ async function removeCartItem(reservaId) {
             const cartItem = document.getElementById(`cart-item-${reservaId}`);
             if (cartItem) cartItem.remove();
             updateCartCount(-1);
+            updateCartTotal();
             showToast('Reserva removida.', 'success');
             refreshSeatMap();
         } else {
@@ -527,12 +606,14 @@ async function processPayment() {
     confirmBtn.textContent = 'Pagar Ahora';
     confirmBtn.disabled = false;
 
+    updateCartTotal();
+
     if (successCount > 0) {
         showToast(`¡Pago de ${successCount} entrada(s) exitoso!`, 'success');
         refreshSeatMap();
         if (document.getElementById('cart-items').children.length === 0) {
             closeCart();
-            cancelOperation();
+            finishSession();
         }
     }
 }
@@ -542,6 +623,16 @@ async function cancelOperation() {
         try {
             await fetch(`${API_BASE}/sessions/${currentSessionId}/cancel`, { method: 'POST' });
         } catch (e) { console.error('Error cancelando sesión', e); }
+    }
+    resetSessionUI();
+    showEventsSection();
+}
+
+async function finishSession() {
+    if (currentSessionId) {
+        try {
+            await fetch(`${API_BASE}/sessions/${currentSessionId}/complete`, { method: 'POST' });
+        } catch (e) { console.error('Error completando sesión', e); }
     }
     resetSessionUI();
     showEventsSection();

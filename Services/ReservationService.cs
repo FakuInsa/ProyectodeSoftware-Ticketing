@@ -60,7 +60,7 @@ namespace Ticketing.Services
             {
                 await _context.SaveChangesAsync();
 
-                // Registrar auditoría exitosa (fuera de la transacción principal para garantizar inmutabilidad)
+                // Log de auditoría si todo salió bien
                 await _auditService.LogAsync(
                     sesion.UsuarioId,
                     "CREATE_RESERVATION",
@@ -77,7 +77,7 @@ namespace Ticketing.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Registrar auditoría fallida por concurrencia
+                // Logueamos el error de concurrencia
                 await _auditService.LogIndependentAsync(
                     sesion.UsuarioId,
                     "RESERVATION_FAILED_CONCURRENCY",
@@ -137,7 +137,7 @@ namespace Ticketing.Services
             {
                 await _context.SaveChangesAsync();
 
-                // Registrar auditoría exitosa (fuera de la transacción principal para garantizar inmutabilidad)
+                // Log de auditoría de la cancelación
                 await _auditService.LogAsync(
                     usuarioId,
                     "CANCEL_RESERVATION",

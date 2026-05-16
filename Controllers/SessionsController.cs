@@ -31,7 +31,7 @@ namespace Ticketing.Controllers
             if (evento == null || evento.Estado != "Activo")
                 return BadRequest(new { error = "Evento no disponible." });
 
-            // Verificar si el usuario ya tiene una sesión activa para este evento
+            // Nos fijamos si el usuario ya tiene una sesión para este evento
             var sesionActiva = await _context.SesionesReserva
                 .FirstOrDefaultAsync(s => s.UsuarioId == request.UsuarioId && s.EventoId == request.EventoId && s.Estado == "Activa" && s.ExpiracionGlobal > DateTime.UtcNow);
 
@@ -44,7 +44,7 @@ namespace Ticketing.Controllers
                 });
             }
 
-            // Crear nueva sesión (5 minutos globales para elegir todo)
+            // Nueva sesión con 5 minutos de tiempo
             var sesion = new SesionReserva
             {
                 UsuarioId = request.UsuarioId,
@@ -93,6 +93,7 @@ namespace Ticketing.Controllers
                     {
                         butacaId = r.ButacaId,
                         sectorNombre = r.Butaca?.Sector?.Nombre,
+                        precio = r.Butaca?.Sector?.Precio,
                         fila = r.Butaca?.Fila,
                         numeroAsiento = r.Butaca?.NumeroAsiento
                     }
@@ -129,6 +130,21 @@ namespace Ticketing.Controllers
             await _context.SaveChangesAsync();
             
             await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
+
+            return Ok();
+        }
+
+        [HttpPost("{sesionId}/complete")]
+        public async Task<IActionResult> CompleteSession(int sesionId)
+        {
+            var sesion = await _context.SesionesReserva.FindAsync(sesionId);
+            if (sesion == null) return NotFound();
+
+            if (sesion.Estado == "Activa")
+            {
+                sesion.Estado = "Completada";
+                await _context.SaveChangesAsync();
+            }
 
             return Ok();
         }

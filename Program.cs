@@ -9,10 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
-// Add services to the container.
+// Agregamos controladores
 builder.Services.AddControllers();
 
-// Configure Entity Framework Core with PostgreSQL
+// Config de la DB con Postgres
 builder.Services.AddDbContext<SistemaTicketingContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -41,7 +41,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<SistemaTicketingContext>();
 
-        // Ejecutar las migraciones automáticamente (Crea la base de datos y tablas si no existen)
+        // Corremos las migraciones al toque
         context.Database.Migrate();
 
         // inicializa la base de datos con datos de prueba
@@ -54,7 +54,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// app.UseHttpsRedirection(); // Comentado para evitar problemas de bucle de redirección o conexión rechazada en Docker sin certificados SSL
+// app.UseHttpsRedirection(); // Sacamos esto para que no joda en Docker sin SSL
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthorization();

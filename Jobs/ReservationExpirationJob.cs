@@ -14,15 +14,13 @@ using Ticketing.Hubs;
 
 namespace Ticketing.Jobs
 {
-    // BackgroundService es la clase base de .NET para tareas en segundo plano.
-    // Se registra como Singleton y corre en paralelo al servidor HTTP.
+    // Job que corre en segundo plano para limpiar reservas viejas
     public class ReservationExpirationJob : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<ReservationExpirationJob> _logger;
 
-        // Cada cuánto corre el job. 60 segundos es razonable, las reservas vencen a los 5 minutos, así que el peor caso
-        // es que una butaca tarde 6 minutos en liberarse — aceptable.
+        // Intervalo de chequeo
         private readonly TimeSpan _interval = TimeSpan.FromSeconds(30);
         private readonly IHubContext<TicketingHub> _hubContext;
 
@@ -37,7 +35,7 @@ namespace Ticketing.Jobs
         {
             _logger.LogInformation("ReservationExpirationJob iniciado.");
 
-            // Loop principal — corre mientras la app esté viva
+            // Loop infinito mientras la app esté prendida
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -46,13 +44,10 @@ namespace Ticketing.Jobs
                 }
                 catch (Exception ex)
                 {
-                    // Logueamos pero NO relanzamos — si relanzamos, el job muere
-                    // y las reservas nunca se liberarían hasta reiniciar la app.
                     _logger.LogError(ex, "Error en ReservationExpirationJob.");
                 }
 
-                // Esperamos el intervalo antes de la próxima ejecución.Task.Delay respeta la cancelación: si la app se apaga
-                // durante la espera, no esperamos los 60 seg completos.
+                // Esperamos un toque antes de volver a chequear
                 await Task.Delay(_interval, stoppingToken);
             }
 
@@ -61,8 +56,7 @@ namespace Ticketing.Jobs
 
         private async Task ProcesarReservasVencidasAsync()
         {
-            // Creamos un scope nuevo por cada ejecución del job.Esto es obligatorio porque DbContext es Scoped y el job es Singleton.
-            // Sin el scope, .NET tiraría un error de lifetime en runtime.
+            // Scope para el DbContext
             using var scope = _scopeFactory.CreateScope();
 
             var context = scope.ServiceProvider.GetRequiredService<SistemaTicketingContext>();
@@ -123,7 +117,7 @@ namespace Ticketing.Jobs
                     await transaction.CommitAsync();
 
                     _logger.LogInformation("[Job] Sesion {SesionId} expirada y {Cantidad} butacas liberadas.", sesion.Id, sesion.Reservas.Count);
-                    
+
                     // Notificar a todos los clientes en tiempo real
                     await _hubContext.Clients.All.SendAsync("SeatMapUpdated");
                 }
