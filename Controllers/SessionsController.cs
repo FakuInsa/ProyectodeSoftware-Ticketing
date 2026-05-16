@@ -31,7 +31,7 @@ namespace Ticketing.Controllers
             if (evento == null || evento.Estado != "Activo")
                 return BadRequest(new { error = "Evento no disponible." });
 
-            // Verificar si el usuario ya tiene una sesión activa para este evento
+            // Nos fijamos si el usuario ya tiene una sesión para este evento
             var sesionActiva = await _context.SesionesReserva
                 .FirstOrDefaultAsync(s => s.UsuarioId == request.UsuarioId && s.EventoId == request.EventoId && s.Estado == "Activa" && s.ExpiracionGlobal > DateTime.UtcNow);
 
@@ -44,7 +44,7 @@ namespace Ticketing.Controllers
                 });
             }
 
-            // Crear nueva sesión (5 minutos globales para elegir todo)
+            // Nueva sesión con 5 minutos de tiempo
             var sesion = new SesionReserva
             {
                 UsuarioId = request.UsuarioId,
