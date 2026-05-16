@@ -86,7 +86,6 @@ namespace Ticketing.Data
 
             var sectores3 = new Sector[]
             {
-                // CORREGIDO: Ahora usan evento3.Id
                 new Sector { EventoId = evento3.Id, Nombre = "Platea Izquierda", Precio = 20000.00m, Capacidad = 20 },
                 new Sector { EventoId = evento3.Id, Nombre = "Platea Derecha", Precio = 20000.00m, Capacidad = 20 },
                 new Sector { EventoId = evento3.Id, Nombre = "Platea Central", Precio = 20000.00m, Capacidad = 30 },
@@ -102,7 +101,6 @@ namespace Ticketing.Data
 
             foreach (var sector in sectores3)
             {
-                // Palcos de a 3 
                 int asientosPorFila = 10;
                 if (sector.Nombre.Contains("Izquierda") || sector.Nombre.Contains("Derecha")) asientosPorFila = 5;
 
